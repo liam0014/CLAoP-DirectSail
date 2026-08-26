@@ -35,21 +35,24 @@ float GetDistance2DRel(float x1, float z1, float x2, float z2)
 	return (dx * dx) + (dz * dz);
 }
 
-// The mainland sea maps cover long stretches of coast. Their single nominal
-// world-map centre is therefore a poor measure of which sea zone owns a given
-// Direct Sail position.
-bool DirectSail_IsExtendedSeaRegion(string sIsland)
+// Return the sea-map scale used by a given island/region.
+// Most islands use WDM_MAP_TO_SEA_SCALE (50); Cuba and the mainland
+// coast maps use the smaller 25 scale.
+int DirectSail_GetIslandScale(string sIsland)
 {
-	if(sIsland == "Beliz" || sIsland == "SantaCatalina" || sIsland == "PortoBello"
-		|| sIsland == "Cartahena" || sIsland == "Maracaibo"
+	if (sIsland == "Cuba1" || sIsland == "Cuba2" || sIsland == "Beliz" || sIsland == "SantaCatalina"
+		|| sIsland == "PortoBello" || sIsland == "Cartahena" || sIsland == "Maracaibo"
 		|| sIsland == "Caracas" || sIsland == "Cumana")
 	{
-		return true;
+		return 25;
 	}
 
-	return false;
+	return WDM_MAP_TO_SEA_SCALE;
 }
 
+// Return squared distance from the player's persistent world-map position to
+// the representative geometry of a sea zone.
+//
 // Use both the island/region centre and every existing child anchor which
 // exposes position.x and position.z (towns, shores, lighthouses, etc.). This
 // prevents large islands such as Hispaniola from retaining the previous sea
@@ -72,6 +75,7 @@ float DirectSail_GetSeaRegionDistanceSq(string sIsland, float fPlayerX, float fP
 		stf(worldMap.islands.(sIsland).position.x),
 		stf(worldMap.islands.(sIsland).position.z)
 	);
+
 
 	sRegionPath = "islands." + sIsland;
 	makearef(rRegion, worldMap.(sRegionPath));
