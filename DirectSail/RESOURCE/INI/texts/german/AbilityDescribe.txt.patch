@@ -1,0 +1,8 @@
+#find
+Schiffsgeschwindigkeit auf der Weltkarte um 5 % erhöht.
+}
+#replacewith
+Schiffsgeschwindigkeit auf der Weltkarte um 5 % erhöht.
+Segelgeschwindigkeit aller Schiffe der Flotte auf See außerhalb von Gefechten um 1 % erhöht.
+}
+#endreplace

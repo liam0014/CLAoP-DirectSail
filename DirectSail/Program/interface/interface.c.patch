@@ -1,0 +1,39 @@
+#find
+void LaunchMapScreen()
+{
+	if(procInterfacePrepare(INTERFACE_MAP))
+	{
+		nPrevInterface = -1;
+		CurrentInterface = INTERFACE_MAP;
+		InitInterface(Interfaces[CurrentInterface].IniFile);
+	}
+}
+
+void LaunchPaperMapScreen()
+#replacewith
+void LaunchMapScreen()
+{
+	Interfaces[INTERFACE_MAP].SectionName = "interface\map.c";
+
+	if(procInterfacePrepare(INTERFACE_MAP))
+	{
+		nPrevInterface = -1;
+		CurrentInterface = INTERFACE_MAP;
+		InitInterface(Interfaces[CurrentInterface].IniFile);
+	}
+}
+
+void LaunchDirSailEnc()
+{
+	Interfaces[INTERFACE_MAP].SectionName = "interface\DirSailEnc.c";
+
+	if(procInterfacePrepare(INTERFACE_MAP))
+	{
+		nPrevInterface = -1;
+		CurrentInterface = INTERFACE_MAP;
+		InitInterface(Interfaces[CurrentInterface].IniFile);
+	}
+}
+
+void LaunchPaperMapScreen()
+#endreplace

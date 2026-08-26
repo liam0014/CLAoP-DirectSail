@@ -1,0 +1,12 @@
+#find
+    for(i = 0; i < num; i++)
+    {
+        aref enc = GetAttributeN(encs, i);
+        if(CheckAttribute(enc, "quest.chrID"))
+#replacewith
+    for(i = 0; i < num; i++)
+    {
+        aref enc = GetAttributeN(encs, i);
+        DeleteAttribute(enc, "dirSailEnc");
+        if(CheckAttribute(enc, "quest.chrID"))
+#endreplace
