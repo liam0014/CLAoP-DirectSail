@@ -50,6 +50,40 @@ int DirectSail_GetIslandScale(string sIsland)
 	return WDM_MAP_TO_SEA_SCALE;
 }
 
+// CLAOP 1.2 beta saves can retain Aruba's incorrect auxiliary world-map
+// coordinates even after worldmap_init.c has been patched. Correct only the
+// known-bad coordinate set, leaving future developer fixes untouched.
+//
+// The original Aruba values appear to have their X/Z magnitudes assigned to
+// the wrong axes. The corrected values below transpose the centre and both
+// shore anchors consistently.
+void DirectSail_FixArubaCoordinates()
+{
+	float fArubaX;
+	float fArubaZ;
+
+	if(!CheckAttribute(&worldMap, "islands.Aruba.position.x")) return;
+	if(!CheckAttribute(&worldMap, "islands.Aruba.position.z")) return;
+
+	fArubaX = stf(worldMap.islands.Aruba.position.x);
+	fArubaZ = stf(worldMap.islands.Aruba.position.z);
+
+	if(fArubaX > 577.0 && fArubaX < 580.0 &&
+	   fArubaZ > -168.0 && fArubaZ < -165.0)
+	{
+		worldMap.islands.Aruba.position.x = 166.772;
+		worldMap.islands.Aruba.position.z = -578.37;
+
+		worldMap.islands.Aruba.Shore67.position.x = 188.992;
+		worldMap.islands.Aruba.Shore67.position.z = -582.122;
+
+		worldMap.islands.Aruba.Shore68.position.x = 149.774;
+		worldMap.islands.Aruba.Shore68.position.z = -590.987;
+
+		trace("DS ARUBA FIX: corrected saved Aruba world-map coordinates");
+	}
+}
+
 // Return squared distance from the player's persistent world-map position to
 // the representative geometry of a sea zone.
 //
@@ -91,6 +125,30 @@ float DirectSail_GetSeaRegionDistanceSq(string sIsland, float fPlayerX, float fP
 		fAnchorX = stf(rAnchor.position.x);
 		fAnchorZ = stf(rAnchor.position.z);
 		fDistance = GetDistance2DRel(fPlayerX, fPlayerZ, fAnchorX, fAnchorZ);
+
+		if(fDistance < fBestDistance)
+		{
+			fBestDistance = fDistance;
+		}
+	}
+
+	// Curacao extends considerably west of its scripted town/shore anchors.
+	// This Direct Sail-only virtual anchor represents the western end of the
+	// island so an Aruba -> Curacao transition can occur while the player is
+	// still safely offshore.
+	//
+	// The coordinate comes from the observed transition position which, when
+	// converted into Curacao's tactical sea, placed the ship almost against
+	// the western coastline. It is used only for sea-zone ownership distance;
+	// it does not alter Curacao's world-map origin or reload coordinates.
+	if(sIsland == "Curacao")
+	{
+		fDistance = GetDistance2DRel(
+			fPlayerX,
+			fPlayerZ,
+			294.152,
+			-639.1074
+		);
 
 		if(fDistance < fBestDistance)
 		{
@@ -1762,6 +1820,10 @@ void CheckIslandChange()
 
     float 		distToClosestIsland, distStorm;
 #replacewith
+    // Existing CLAOP 1.2 saves may still contain Aruba's original bad
+    // auxiliary coordinates even when worldmap_init.c itself is patched.
+    DirectSail_FixArubaCoordinates();
+
     getRTplayerShipXZ(&RTplayerShipX, &RTplayerShipZ, &scale);
 
     // CheckIslandChange is called once per in-game hour by the Direct Sail

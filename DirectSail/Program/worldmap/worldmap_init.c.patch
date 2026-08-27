@@ -6,10 +6,10 @@
 	worldMap.islands.Aruba.Shore68.position.x = 590.987;
 	worldMap.islands.Aruba.Shore68.position.z = -149.774;
 #replacewith
-	worldMap.islands.Aruba.position.x = 145.34;
-	worldMap.islands.Aruba.position.z = -572.66;
-	worldMap.islands.Aruba.Shore67.position.x = 149.092;
-	worldMap.islands.Aruba.Shore67.position.z = -594.88;
-	worldMap.islands.Aruba.Shore68.position.x = 157.957;
-	worldMap.islands.Aruba.Shore68.position.z = -555.662;
+	worldMap.islands.Aruba.position.x = 166.772;
+	worldMap.islands.Aruba.position.z = -578.37;
+	worldMap.islands.Aruba.Shore67.position.x = 188.992;
+	worldMap.islands.Aruba.Shore67.position.z = -582.122;
+	worldMap.islands.Aruba.Shore68.position.x = 149.774;
+	worldMap.islands.Aruba.Shore68.position.z = -590.987;
 #endreplace
