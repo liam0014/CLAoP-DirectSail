@@ -1,0 +1,41 @@
+Watchman {Vigía}
+StopTracking {Dejar de seguir}
+Tracking {Siguiendo}
+TrackingStopped {Seguimiento detenido.}
+ContactLost {Contacto perdido.}
+NothingSpotted {Nada a la vista.}
+UnablePosition {No se pudo determinar nuestra posición.}
+DirectionNorth {Norte}
+DirectionNorthEast {Noreste}
+DirectionEast {Este}
+DirectionSouthEast {Sureste}
+DirectionSouth {Sur}
+DirectionSouthWest {Suroeste}
+DirectionWest {Oeste}
+DirectionNorthWest {Noroeste}
+RangeNearby {Cerca}
+RangeModerate {Distancia media}
+RangeDistant {Lejos}
+NationSpanish {Españoles}
+NationFrench {Franceses}
+NationEnglish {Ingleses}
+NationDutch {Holandeses}
+NationPirate {Piratas}
+NationUnknown {Desconocidos}
+BattleNationSpain {España}
+BattleNationFrance {Francia}
+BattleNationEngland {Inglaterra}
+BattleNationHolland {Holanda}
+BattleNationPirates {Piratas}
+Versus {contra}
+TypeMerchants {mercantes}
+TypeMerchantConvoy {convoy mercante}
+TypeTradeCaravan {caravana comercial}
+TypePatrol {patrulla}
+TypePirates {piratas}
+TypeNavalSquadron {escuadra naval}
+TypePunitiveExpedition {expedición punitiva}
+TypeFleet {flota}
+TypeBattle {batalla}
+TypeFlotsam {restos flotantes}
+TypeStrandedVessel {navío naufragado}
