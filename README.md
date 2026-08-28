@@ -1,70 +1,133 @@
-# CLAoP-DirectSail
+# Caribbean Legend: Age of Pirates — Direct Sail
 
-Target: Caribbean Legend: Age of Pirates 1.2
+**Current target: Caribbean Legend: Age of Pirates 1.2 Beta**
 
+Direct Sail restores and expands the game's dormant real-time island-to-island sailing system.
 
-Included
---------
-- Re-enables the dormant Direct Sail island-to-island transition system.
-- Allows world-map ship encounters to be encountered while travelling through Direct Sail.
-- Continues generating new fleet encounters while Direct Sail is active.
-- Uses a shared persistent encounter population, so encounters generated during Direct Sail can also appear on the normal global map.
-- Maintains encounter population around the player's current route.
-- Supports Warring encounters, allowing opposing AI fleets generated during Direct Sail to appear as live battles.
-- Supports special encounters such as floating cargo and shipwrecked survivors.
-- Uses the game's normal special-encounter pickup and reward handling.
-- Integrates storms into Direct Sail.
+Instead of travelling through the global map, you can sail directly between islands in the normal sea environment. Direct Sail preserves your position and heading as you cross between sea areas and integrates world-map encounters, storms and other systems into the journey.
+
+> **Beta status**
+>
+> The current GitHub version is developed and tested against Caribbean Legend: Age of Pirates 1.2 Beta.
+>
+> The Steam Workshop version remains on the stable 1.1.2-compatible build until version 1.2 is released more widely.
+
+## Installation
+
+Download the latest repository files and copy the contents of the `DirectSail` folder over the existing Steam Workshop installation:
+
+`C:\Program Files (x86)\Steam\steamapps\workshop\content\3549020\3781789104`
+
+Allow the updated files to overwrite the Workshop version.
+
+No new game is required.
+
+## Features
+
+### Direct sailing
+
+- Sail directly between islands without entering the global map.
+- Position and heading are preserved when moving between sea areas.
+- Correctly handles transitions between islands using different map scales.
+- Adds the player's current position to the paper world maps.
+- Ships gradually repair while travelling, at 1/28 of the normal daily repair rate per in-game hour.
+
+### Persistent encounters
+
+Direct Sail uses the same persistent encounter population as the global map.
+
+This means that while travelling you can encounter:
+
+- merchant fleets and convoys;
+- patrols and pursuing fleets;
+- pirate and naval fleets;
+- battles between opposing AI fleets;
+- floating cargo;
+- stranded or shipwrecked vessels.
+
+New encounters continue to be generated while Direct Sail is active, and encounters generated during Direct Sail can later appear on the normal global map.
+
+### Watchman
+
+The 1.2 beta adds a new **Watchman** system for actively searching for nearby encounters without opening the global map.
+
+Open the normal sea **Enter** menu and select **Watchman**.
+
+Nearby contacts are listed with:
+
+- encounter type or nationality;
+- compass direction;
+- approximate range: **Nearby**, **Moderate** or **Distant**.
+
+Select a contact to begin tracking it. The Watchman will report its updated direction and range once per in-game hour as you sail.
+
+Tracking continues when Direct Sail moves between island sea areas.
+
+Open Watchman again and select **Stop Tracking** to abandon the pursuit.
+
+Battles between two AI fleets are presented as a single contact showing both participating nations. Flotsam and stranded-vessel encounters can also be detected and tracked.
+
+Watchman results are sorted with the nearest contacts first.
+
+Watchman localisation is included for English, Russian, Simplified Chinese, French, German, Polish, Portuguese and Spanish. Non-English Watchman text was translated from English with AI assistance.
+
+### Storms
+
 - Existing world-map storms continue moving and ageing while Direct Sail is active.
-- New storms can be generated during Direct Sail using the game's normal storm-generation rate.
-- Storms generated during Direct Sail are persistent and can also appear on the normal global map.
-- Approaching a storm produces warning weather before the player enters the storm itself.
-- Entering a storm uses the game's normal storm weather, ship damage and tornado handling.
-- Preserves storm warning or storm conditions when transitioning directly between sea areas.
-- Corrects position preservation when transitioning between sea areas that use different map scales.
-- Restores the normal map script whenever the ordinary global-map encounter interface is launched.
-- Clears Direct Sail encounter-use markers when the normal world-map cleanup lifecycle runs.
-- While in Direct Sail, ship repairs occur once per in-game hour at 1/28 of the normal daily repair rate, providing gradual repairs without making Direct Sail faster than the game's standard daily repair system.
+- New persistent storms can be generated while travelling.
+- Storms generated through Direct Sail can subsequently appear on the global map.
+- Approaching a storm produces warning weather before entering it.
+- Entering a storm uses the game's normal storm weather, damage and tornado systems.
+- Storm conditions are preserved during Direct Sail sea-area transitions.
 
+## Known limitations
 
-Known limitations
------------------
-- Quest ships and special quest fleets, such as coloured-sail ships or gold fleets visible on the global map, are not supported through Direct Sail.
-- The normal global map must still be used when a quest requires the player to locate one of these encounters.
-- Support for quest-specific fleets through Direct Sail is unlikely to be added because these encounters rely heavily on the normal world-map and quest scripting systems.
+Quest ships and special quest fleets that are intended to be located through the global map — such as coloured-sail encounters and other scripted fleets — are not supported through Direct Sail.
 
+The normal global map must still be used when a quest specifically requires one of these encounters to be located.
 
-Files
------
-Patch files:
-  Program\islands\islands.c.patch
-  Program\islands\islands_loader.c.patch
-  Program\Weather\WhrWeather.c.patch
-  Program\interface\interface.c.patch
-  Program\worldmap\worldmap_globals.c.patch
+Support for these quest-specific encounters is unlikely because they depend heavily on the game's normal world-map and quest scripting systems.
 
-New files:
-  Program\interface\DirSailEnc.c
-  RESOURCE\INI\INTERFACES\DirSailEnc.ini
+Once a persistent encounter has already spawned into the tactical sea, leaving that sea area without engaging it may cause the encounter to be lost. Watchman tracking primarily applies while the encounter remains in the persistent world-map population.
 
+## Beta testing
 
-Credits and attribution
------------------------
+The core Direct Sail system and ordinary fleet tracking have been tested extensively.
+
+Warring battles, flotsam and stranded-vessel encounters are less common and may still reveal edge cases during wider beta testing.
+
+If you encounter a problem, a description of what happened together with the game's `compile.log` is particularly useful. The beta retains targeted diagnostic logging for these rarer encounter types.
+
+## Repository structure
+
+`DirectSail/Program/`  
+Game scripts and source patches.
+
+`DirectSail/RESOURCE/`  
+Interface files, localisation and runtime resources.
+
+`DirectSail/SOURCE_TEXTURE/`  
+Source artwork used for Direct Sail interface assets.
+
+## Credits and attribution
+
 World-map encounter support includes code adapted from the Direct Sail encounter implementation in:
 
-Gentlemen of Fortune: Historical Eras II
+**Gentlemen of Fortune: Historical Eras II**  
 https://chezjfrey.itch.io/gentlemen-of-fortune-historical-eras-module-2
 
-In particular, Program\interface\DirSailEnc.c is based on the Historical Eras II Direct Sail encounter implementation and has been modified for compatibility with Caribbean Legend: Age of Pirates.
+In particular, `Program/interface/DirSailEnc.c` is based on the Historical Eras II Direct Sail encounter implementation and has been modified extensively for compatibility with Caribbean Legend: Age of Pirates and the expanded Direct Sail system.
 
 Historical Eras II states that its assets are distributed under the Creative Commons Attribution-NonCommercial 4.0 International licence.
 
-Original material remains copyright of its respective authors and contributors. No ownership is claimed over the portions adapted from Historical Eras II.
+Original material remains copyright of its respective authors and contributors. No ownership is claimed over portions adapted from Historical Eras II.
 
+## Compatibility
 
-Compatibility notes
--------------------
-The patches were constructed against the Caribbean Legend: Age of Pirates 1.1.2 source files.
+The current GitHub build is developed and tested against **Caribbean Legend: Age of Pirates 1.2 Beta (24.08.2026)**.
 
-Other mods or future game updates that alter the same source sections may conflict with these patches or prevent them from applying.
+The Steam Workshop release currently remains on the stable **1.1.2-compatible** version.
 
-No new game is expected to be required.
+Other mods or future game updates that alter the same patched source sections may conflict with Direct Sail or prevent its patches from applying.
+
+No new game is required.
