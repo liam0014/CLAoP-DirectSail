@@ -1,8 +1,9 @@
 // ============================================================================
 // Direct Sail - automatic Watchman alerts for quest contacts
 //
-// Notifies the player once when a quest encounter crosses into Watchman range.
-// The marker is cleared after it leaves range, allowing a later re-entry alert.
+// Notifies the player immediately when a quest encounter crosses into Watchman
+// range, then once per game hour while it remains in range. Leaving range clears
+// the marker so a later re-entry produces a fresh immediate alert.
 // ============================================================================
 
 void DirectSail_WatchmanQuestRangeUpdate()
@@ -13,6 +14,8 @@ void DirectSail_WatchmanQuestRangeUpdate()
     int i;
     int iNum;
     int iScale;
+    int iDay;
+    int iHour;
 
     float fPlayerX;
     float fPlayerZ;
@@ -21,9 +24,11 @@ void DirectSail_WatchmanQuestRangeUpdate()
     float fDistSq;
 
     bool bInRange;
+    bool bShouldAlert;
 
     string sLabel;
     string sID;
+    string sReason;
 
     if(!CheckAttribute(&worldMap, "island") ||
        !CheckAttribute(&worldMap, "zeroX") ||
@@ -44,6 +49,9 @@ void DirectSail_WatchmanQuestRangeUpdate()
 
     fPlayerZ = stf(worldMap.zeroZ) +
                stf(pchar.Ship.Pos.z) / makefloat(iScale);
+
+    iDay = GetDataDay();
+    iHour = MakeInt(GetHour());
 
     makearef(WME, worldMap.encounters);
     iNum = GetAttributesNum(WME);
@@ -73,13 +81,49 @@ void DirectSail_WatchmanQuestRangeUpdate()
         {
             if(CheckAttribute(rEnc, "dsWatchmanQuestInRange"))
                 DeleteAttribute(rEnc, "dsWatchmanQuestInRange");
+            if(CheckAttribute(rEnc, "dsWatchmanQuestLastAlertDay"))
+                DeleteAttribute(rEnc, "dsWatchmanQuestLastAlertDay");
+            if(CheckAttribute(rEnc, "dsWatchmanQuestLastAlertHour"))
+                DeleteAttribute(rEnc, "dsWatchmanQuestLastAlertHour");
 
             continue;
         }
 
-        if(CheckAttribute(rEnc, "dsWatchmanQuestInRange")) continue;
+        bShouldAlert = false;
+        sReason = "";
 
-        rEnc.dsWatchmanQuestInRange = true;
+        // First frame after the contact enters Watchman range.
+        if(!CheckAttribute(rEnc, "dsWatchmanQuestInRange"))
+        {
+            rEnc.dsWatchmanQuestInRange = true;
+            bShouldAlert = true;
+            sReason = "entry";
+        }
+        else
+        {
+            // Repeat once when the game clock enters a new hour while the
+            // quest contact remains inside Watchman range.
+            if(!CheckAttribute(rEnc, "dsWatchmanQuestLastAlertDay") ||
+               !CheckAttribute(rEnc, "dsWatchmanQuestLastAlertHour"))
+            {
+                bShouldAlert = true;
+                sReason = "hourly-missing-timestamp";
+            }
+            else
+            {
+                if(sti(rEnc.dsWatchmanQuestLastAlertDay) != iDay ||
+                   sti(rEnc.dsWatchmanQuestLastAlertHour) != iHour)
+                {
+                    bShouldAlert = true;
+                    sReason = "hourly";
+                }
+            }
+        }
+
+        if(!bShouldAlert) continue;
+
+        rEnc.dsWatchmanQuestLastAlertDay = iDay;
+        rEnc.dsWatchmanQuestLastAlertHour = iHour;
 
         sID = GetAttributeName(rEnc);
         sLabel = DirectSail_WatchmanContactLabel(rEnc);
@@ -92,8 +136,11 @@ void DirectSail_WatchmanQuestRangeUpdate()
             DirectSail_WatchmanRange(fDistSq) + "."
         );
 
-        trace("DS WATCHMAN QUEST SPOTTED: id=" + sID +
+        trace("DS WATCHMAN QUEST SPOTTED: reason=" + sReason +
+              " id=" + sID +
               " label=" + sLabel +
+              " day=" + iDay +
+              " hour=" + iHour +
               " distSq=" + fDistSq);
     }
 }
