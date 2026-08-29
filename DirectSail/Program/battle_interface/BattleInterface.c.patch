@@ -34,6 +34,7 @@ void BI_Frame()
 void BI_Frame()
 {
 	DirectSail_WatchmanHourlyUpdate();
+	DirectSail_WatchmanQuestRangeUpdate();
 
 	bool bYesUpdateCommand = false;
 #endreplace
