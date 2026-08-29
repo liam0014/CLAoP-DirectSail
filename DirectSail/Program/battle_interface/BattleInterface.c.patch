@@ -5,6 +5,7 @@
 #replacewith
 #include "battle_interface\BI_ControlTips.c"
 #include "battle_interface\DirectSailWatchman.c"
+#include "battle_interface\DirectSailWatchmanQuestAlert.c"
 
 #define BI_ICONS_SHIPS_TEXTURE_NAME "battle_interface\icons.tga"
 #endreplace
