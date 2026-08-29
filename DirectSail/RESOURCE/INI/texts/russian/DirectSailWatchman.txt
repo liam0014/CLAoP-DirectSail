@@ -4,6 +4,7 @@ Tracking {Слежение:}
 TrackingStopped {Слежение прекращено.}
 ContactLost {Контакт потерян.}
 NothingSpotted {Ничего не замечено.}
+QuestShipSpotted {Обнаружен квестовый корабль:}
 UnablePosition {Не удалось определить наше положение.}
 DirectionNorth {Север}
 DirectionNorthEast {Северо-восток}
