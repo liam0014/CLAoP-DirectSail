@@ -1,0 +1,31 @@
+#find
+	wdmUpdateAllEncounterLivetime(); // homo карта 25/03/07
+	Flag_Rerise(); // переподнять флаг при выходе на карту, прменить отношения нации в столбец ГГ
+#replacewith
+	// Direct Sail maintains quest lifetimes without stripping quest.event.
+	// Expired encounters are handed to vanilla wdmEncounterDelete(), so the
+	// original Map_TraderSucces / Map_WarriorEnd event is preserved.
+	DirectSail_QuestUpdateLifetimeClock();
+	// Direct Sail quest shadows are a tactical-sea representation only.
+	// Return surviving shadows to the normal quest queue before the native
+	// world map is created.
+	DirectSail_QuestPrepareWorldMapHandoff();
+	Flag_Rerise(); // переподнять флаг при выходе на карту, прменить отношения нации в столбец ГГ
+#endreplace
+
+#find
+	UnloadLocation(loc);
+	EmptyAllFantomShips();
+	wdmEmptyAllDeadQuestEncounter(); // трем случайки
+}
+#replacewith
+	UnloadLocation(loc);
+	EmptyAllFantomShips();
+	wdmEmptyAllDeadQuestEncounter(); // трем случайки
+
+	// Time spent ashore also counts against live quest encounter timeouts.
+	// Age them before returning any Direct Sail shadows to the native map.
+	DirectSail_QuestUpdateLifetimeClock();
+	DirectSail_QuestPrepareWorldMapHandoff();
+}
+#endreplace

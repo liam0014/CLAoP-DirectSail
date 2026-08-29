@@ -1,4 +1,21 @@
 #find
+        rRawGroup = GetAttributeN(WME, i);
+        if(!CheckAttribute(rRawGroup, "type")) continue;
+        if(CheckAttribute(rRawGroup, "needDelete")) continue;
+        if(CheckAttribute(rRawGroup, "dirSailEnc")) continue;
+		
+        if(rRawGroup.type == "Storm") 
+#replacewith
+        rRawGroup = GetAttributeN(WME, i);
+        if(!CheckAttribute(rRawGroup, "type")) continue;
+        if(CheckAttribute(rRawGroup, "needDelete")) continue;
+        if(CheckAttribute(rRawGroup, "dsQuestHidden")) continue;
+        if(CheckAttribute(rRawGroup, "dirSailEnc")) continue;
+		
+        if(rRawGroup.type == "Storm") 
+#endreplace
+
+#find
 #define DIR_FORE 		4
 
 extern void evtDirSail(aref rRawG, aref encDataForS, int iNumMerchantS, int iNumWarS,
@@ -20,6 +37,7 @@ extern void evtDirSail(aref rRawG, aref encDataForS, int iNumMerchantS, int iNum
 
 // Standard world-map clock: one game hour per world-map simulation second.
 #define DS_REPLENISH_MAP_SECONDS_PER_HOUR   1.0
+#define DS_REPLENISH_SUBTICKS_PER_HOUR       6
 
 // Direct Sail spreads the normal daily repair formula across hourly ticks.
 // 28 is a close approximation to vanilla daily repair across typical damage
@@ -824,6 +842,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
     int iPersistentIndex;
     int iNation;
     int iTimeoutDays;
+    int iSubTick;
 
     float fDx;
     float fDz;
@@ -938,19 +957,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
         sShellMode = "synthetic";
     }
 
-    fTick = DS_REPLENISH_MAP_SECONDS_PER_HOUR;
-
-    // Same accumulator maths as CLAOP's normal wdmShipEncounter().
-    wdmTimeOfLastMerchant = wdmTimeOfLastMerchant + fTick * DS_REPLENISH_MERCHANT_RATE * 1000.0 * iEncountersRate;
-    wdmTimeOfLastWarring = wdmTimeOfLastWarring + fTick * DS_REPLENISH_WARRING_RATE * 1000.0 * iEncountersRate;
-    wdmTimeOfLastFollow = wdmTimeOfLastFollow + fTick * DS_REPLENISH_FOLLOW_RATE * 1000.0 * iEncountersRate;
-    wdmTimeOfLastSpecial = wdmTimeOfLastSpecial + fTick * DS_REPLENISH_SPECIAL_RATE * 1000.0 * iEncountersRate;
-
-    trace("DS REPLENISH: timers M=" + wdmTimeOfLastMerchant +
-          " W=" + wdmTimeOfLastWarring +
-          " F=" + wdmTimeOfLastFollow +
-          " S=" + wdmTimeOfLastSpecial);
-
+    fTick = DS_REPLENISH_MAP_SECONDS_PER_HOUR / makefloat(DS_REPLENISH_SUBTICKS_PER_HOUR);
 
     bEncOff = false;
     if(CheckAttribute(pchar, "worldmapencountersoff") == 1)
@@ -971,6 +978,19 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
         fHourPerSec = stf(worldMap.date.hourPerSec);
         if(fHourPerSec <= 0.0) fHourPerSec = 1.0;
     }
+
+    for(iSubTick = 0; iSubTick < DS_REPLENISH_SUBTICKS_PER_HOUR; iSubTick++)
+    {
+        if(iLocalCount >= DS_REPLENISH_LOCAL_TARGET)
+            break;
+
+        // Same accumulator maths as CLAOP's normal wdmShipEncounter(), but
+        // spread across several smaller hourly sub-ticks so Direct Sail more
+        // closely matches vanilla's continuous world-map generation cadence.
+        wdmTimeOfLastMerchant = wdmTimeOfLastMerchant + fTick * DS_REPLENISH_MERCHANT_RATE * 1000.0 * iEncountersRate;
+        wdmTimeOfLastWarring = wdmTimeOfLastWarring + fTick * DS_REPLENISH_WARRING_RATE * 1000.0 * iEncountersRate;
+        wdmTimeOfLastFollow = wdmTimeOfLastFollow + fTick * DS_REPLENISH_FOLLOW_RATE * 1000.0 * iEncountersRate;
+        wdmTimeOfLastSpecial = wdmTimeOfLastSpecial + fTick * DS_REPLENISH_SPECIAL_RATE * 1000.0 * iEncountersRate;
 
     // =====================================================================
     // MERCHANT
@@ -1097,6 +1117,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
                       " lifeDays=" + iTimeoutDays);
 
                 bCreated = true;
+                iLocalCount++;
             }
         }
         else
@@ -1342,6 +1363,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
                                       " lifeDays=" + iTimeoutDays);
 
                                 bCreated = true;
+                                iLocalCount = iLocalCount + 2;
                             }
                             else
                             {
@@ -1489,6 +1511,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
                                       " lifeDays=" + iTimeoutDays);
 
                                 bCreated = true;
+                                iLocalCount++;
                             }
                         }
                         else
@@ -1631,6 +1654,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
                               " lifeDays=" + iTimeoutDays);
 
                         bCreated = true;
+                        iLocalCount++;
                     }
                 }
                 else
@@ -1642,6 +1666,13 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
             }
         }
     }
+
+    }
+
+    trace("DS REPLENISH: timers M=" + wdmTimeOfLastMerchant +
+          " W=" + wdmTimeOfLastWarring +
+          " F=" + wdmTimeOfLastFollow +
+          " S=" + wdmTimeOfLastSpecial);
 
     if(bCreated)
     {
@@ -1747,11 +1778,6 @@ void CheckIslandChange()
     float 	fScale 				= makefloat(scale);
     float 	x, z, ay, dist, xs, zs, dists;
     string 	encID = "";
-    string sDSGenerated = "";
-    string sDSKind = "";
-    string sDSPair = "";
-    string sDSNation = "";
-    string sDSRealType = "";
 #endreplace
 
 #find
@@ -1786,33 +1812,13 @@ void CheckIslandChange()
 #replacewith
     rRawGroup = fndGroup;
 
-    // Log the exact persistent encounter selected for Watchman handling.
+    // Use the persistent encounter's own encounter data. This is essential
+    // for ENCOUNTER_TYPE_ALONE quest fleets promoted during Direct Sail.
     makearef(encDataForSlot, rRawGroup.encdata);
 
-    sDSGenerated = "0";
-    sDSKind = "";
-    sDSPair = "";
-    sDSNation = "";
-    sDSRealType = "";
-
-    if(CheckAttribute(rRawGroup, "dsGenerated")) sDSGenerated = "1";
-    if(CheckAttribute(rRawGroup, "dsGeneratedKind")) sDSKind = rRawGroup.dsGeneratedKind;
-    if(CheckAttribute(rRawGroup, "attacked")) sDSPair = rRawGroup.attacked;
-    if(CheckAttribute(encDataForSlot, "Nation")) sDSNation = encDataForSlot.Nation;
-    if(CheckAttribute(encDataForSlot, "RealEncounterType")) sDSRealType = encDataForSlot.RealEncounterType;
-
-    trace("DS ENCOUNTER SELECT: id=" + encID +
-          " shellType=" + rRawGroup.type +
-          " generated=" + sDSGenerated +
-          " kind=" + sDSKind +
-          " nation=" + sDSNation +
-          " realType=" + sDSRealType +
-          " pair=" + sDSPair +
-          " dist2=" + dist);
-
     LaunchDirSailEnc();
-
-    evtDirSail(rRawGroup, encDataForSlot, iNumMerchantShips, iNumWarShips, RTplayerShipX, RTplayerShipZ, x, ay, z, dist, fScale, encID);
+    evtDirSail(rRawGroup, encDataForSlot, iNumMerchantShips, iNumWarShips,
+               RTplayerShipX, RTplayerShipZ, x, ay, z, dist, fScale, encID);
 #endreplace
 
 #find

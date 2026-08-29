@@ -22,6 +22,7 @@ bool bSpecialEncounter = false;
 bool bStormPrompt = false;
 bool bStormPromptResolved = false;
 bool bStormPromptTornado = false;
+bool bQuestEnterHookApplied = false;
 int isShipEncounterType = 0;
 int iEncounterType, iRealEncounterType, nDesc;
 ref rEncounter;
@@ -41,6 +42,7 @@ void InitInterface(string iniName)
     bStormPrompt = false;
     bStormPromptResolved = false;
     bStormPromptTornado = false;
+    bQuestEnterHookApplied = false;
     nTimeout = 0;
 
     isShipEncounterType = 0;
@@ -201,6 +203,18 @@ void IProcessFrame() //Interface screens cannot use event delay
         else {
             if (!bShipsSpawned && bShipsDesc && nTimeout > nDesc) {
                 assignByID(origEncID);
+
+                // Vanilla map.c calls wdmEnterSeaQuest() before reloading to
+                // tactical sea. Direct Sail is already in tactical sea, so
+                // apply the same quest hook before locDirSail() creates the
+                // quest group and decides its relation/task. This is essential
+                // for friendly quest contacts such as ordinary Sharp meetings.
+                if(sQuestSeaCharId != "" && !bQuestEnterHookApplied)
+                {
+                    wdmEnterSeaQuest(sQuestSeaCharId);
+                    bQuestEnterHookApplied = true;
+                }
+
                 for(int i = 0; i < 2; i++) {
                     grpTrans[i].grpIDTrn = uniqueGName(grpTrans[i].grpID);
                 }
@@ -474,6 +488,7 @@ void locDirSail(int evtID)
     int iCompanionsQ;
     int cn;
     string sGName = "";
+    bool bQuestGroupLogged = false;
     nCheckShipCnt = iNumShips;
     if (iEncounterType == ENCOUNTER_TYPE_ALONE)
     {
@@ -543,10 +558,16 @@ void locDirSail(int evtID)
         Group_SetAddressNone(rEncounter.qID);
         Group_SetXZ_AY(rEncounter.qID, x, z, ay);
         Sea_LoginGroup(rEncounter.qID);
+        bQuestGroupLogged = true;
 
-        //return;
+        // Quest encounters intentionally remain live after tactical entry, so
+        // unlike ordinary encounters they never acquire needDelete. Stop the
+        // Watchman explicitly once the tracked quest group has actually logged
+        // into tactical sea.
+        DirectSail_WatchmanQuestEncounterStarted(encID);
+
     }
-    if(sGName != "") {
+    if(sGName != "" && !bQuestGroupLogged) {
         Sea_AddGroup2TaskList(sGName);
 
         rGroup = Group_FindOrCreateGroup(sGName);
@@ -771,9 +792,10 @@ void IDoExit(int exitCode)
 	DelEventHandler("evntDoPostExit","DoPostExit");
 	DelEventHandler("frame","IProcessFrame");
 
-	if (sQuestSeaCharId != "")
+	if (sQuestSeaCharId != "" && !bQuestEnterHookApplied)
     {
         wdmEnterSeaQuest(sQuestSeaCharId);
+        bQuestEnterHookApplied = true;
     }
     SetTimeScale(1.0);
 	TimeScaleCounter = 0;
@@ -886,4 +908,3 @@ void findWarring(string fType)
         break;
     }
 }
-

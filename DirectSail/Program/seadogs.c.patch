@@ -1,0 +1,17 @@
+#find
+void LoadGame_continue()
+{
+	DelEventHandler("frame","LoadGame_continue");
+	FreezeGroupControls(curKeyGroupName,true);
+	LoadEngineState(pchar.savegamename);
+}
+#replacewith
+void LoadGame_continue()
+{
+	DelEventHandler("frame","LoadGame_continue");
+	FreezeGroupControls(curKeyGroupName,true);
+	DirectSail_WatchmanPrepareLoad();
+	LoadEngineState(pchar.savegamename);
+	DirectSail_WatchmanFinishLoad();
+}
+#endreplace
