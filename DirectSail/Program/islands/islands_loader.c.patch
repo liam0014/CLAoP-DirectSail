@@ -40,9 +40,9 @@ extern void evtDirSail(aref rRawG, aref encDataForS, int iNumMerchantS, int iNum
 #define DS_REPLENISH_SUBTICKS_PER_HOUR       6
 
 // Direct Sail spreads the normal daily repair formula across hourly ticks.
-// 28 is a close approximation to vanilla daily repair across typical damage
+// 27 is a close approximation to vanilla daily repair across typical damage
 // and Repair-skill ranges while avoiding a stronger-than-vanilla bias.
-#define DS_HOURLY_REPAIR_DIVISOR            28.0
+#define DS_HOURLY_REPAIR_DIVISOR            27.0
 
 
 float GetDistance2DRel(float x1, float z1, float x2, float z2)
