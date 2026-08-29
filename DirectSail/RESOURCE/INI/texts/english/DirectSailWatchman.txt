@@ -4,6 +4,7 @@ Tracking {Tracking}
 TrackingStopped {Tracking stopped.}
 ContactLost {Contact lost.}
 NothingSpotted {Nothing spotted.}
+QuestShipSpotted {Quest ship spotted:}
 UnablePosition {Unable to determine our position.}
 DirectionNorth {North}
 DirectionNorthEast {North-east}
