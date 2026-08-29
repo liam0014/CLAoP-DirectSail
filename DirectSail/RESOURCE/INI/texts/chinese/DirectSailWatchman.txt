@@ -4,6 +4,7 @@ Tracking {正在追踪}
 TrackingStopped {已停止追踪。}
 ContactLost {目标已丢失。}
 NothingSpotted {未发现任何目标。}
+QuestShipSpotted {发现任务船只：}
 UnablePosition {无法确定我方位置。}
 DirectionNorth {北}
 DirectionNorthEast {东北}
