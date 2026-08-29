@@ -37,7 +37,7 @@ extern void evtDirSail(aref rRawG, aref encDataForS, int iNumMerchantS, int iNum
 
 // Standard world-map clock: one game hour per world-map simulation second.
 #define DS_REPLENISH_MAP_SECONDS_PER_HOUR   1.0
-#define DS_REPLENISH_SUBTICKS_PER_HOUR       6
+#define DS_REPLENISH_SUBTICKS_PER_HOUR       2
 
 // Direct Sail spreads the normal daily repair formula across hourly ticks.
 // 27 is a close approximation to vanilla daily repair across typical damage
