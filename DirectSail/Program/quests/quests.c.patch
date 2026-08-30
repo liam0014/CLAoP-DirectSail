@@ -134,6 +134,14 @@ void DirectSail_MapEnterInterruptFinish()
 	DeleteAttribute(pchar, "DirectSail.MapEnterFrom");
 	DeleteAttribute(pchar, "DirectSail.MapEnterTo");
 
+	// The synthetic map-to-deck interruption has no real world-map entity.
+	// When this temporary deck later returns to sea, CLAoP normally requests
+	// a LandToSea autosave before the tactical sea is fully constructed.  Such
+	// a save has neither a loaded location nor AISea and reloads to a black
+	// screen.  Mark exactly this one return so interface.c can skip the unsafe
+	// autosave while still running the normal after-save continuation.
+	pchar.DirectSail.MapEnterInterruptReturn = true;
+
 	bSkipSeaLogin = false;
 	pchar.location = "";
 	ReloadFromWMtoL_complete();
