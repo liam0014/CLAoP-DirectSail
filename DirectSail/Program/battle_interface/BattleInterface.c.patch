@@ -7,6 +7,7 @@
 #include "battle_interface\DirectSailWatchman.c"
 #include "battle_interface\DirectSailWatchmanQuestAlert.c"
 #include "battle_interface\DirectSailQuestDiagnostics.c"
+#include "battle_interface\DirectSailArrowDiagnostics.c"
 
 #define BI_ICONS_SHIPS_TEXTURE_NAME "battle_interface\icons.tga"
 #endreplace
@@ -36,6 +37,7 @@ void BI_Frame()
 void BI_Frame()
 {
 	DirectSail_QuestDiagnosticsUpdate();
+	DirectSail_ArrowStatusDiagnosticsUpdate();
 	DirectSail_WatchmanHourlyUpdate();
 	DirectSail_WatchmanQuestRangeUpdate();
 
