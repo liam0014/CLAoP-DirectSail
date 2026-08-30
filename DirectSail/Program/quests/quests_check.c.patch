@@ -47,13 +47,13 @@
 #endreplace
 
 #find
-		quest = GetAttributeN(quests,n);
+        quest = GetAttributeN(quests,n);
 
 		sQuestName = GetAttributeName(quest);
 
 		if (CheckAttribute(quest,"win_condition"))
 #replacewith
-		quest = GetAttributeN(quests,n);
+        quest = GetAttributeN(quests,n);
 
 		sQuestName = GetAttributeName(quest);
 
