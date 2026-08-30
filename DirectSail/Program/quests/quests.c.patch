@@ -141,6 +141,7 @@ void DirectSail_MapEnterInterruptFinish()
 	// screen.  Mark exactly this one return so interface.c can skip the unsafe
 	// autosave while still running the normal after-save continuation.
 	pchar.DirectSail.MapEnterInterruptReturn = true;
+	trace("DS SAVE DIAG: return marker SET before Ship_deck reload");
 
 	bSkipSeaLogin = false;
 	pchar.location = "";
