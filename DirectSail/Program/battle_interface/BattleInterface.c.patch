@@ -36,6 +36,32 @@ void BI_Frame()
 #replacewith
 void BI_Frame()
 {
+	string sDirectSailWatchmanTarget;
+	string sDirectSailWatchmanPath;
+	aref rDirectSailWatchmanTarget;
+
+	// dirSailEnc is the authoritative marker that a persistent world-map
+	// encounter has already become the tactical encounter in front of the
+	// player.  Quest encounters deliberately remain alive on the persistent
+	// map and therefore do not receive needDelete, so a tracked quest contact
+	// could otherwise keep reporting its old strategic-map position if the
+	// dedicated quest-start callback is missed.
+	if(CheckAttribute(pchar, "DirectSail.Watchman.Target"))
+	{
+		sDirectSailWatchmanTarget = pchar.DirectSail.Watchman.Target;
+		sDirectSailWatchmanPath = "encounters." + sDirectSailWatchmanTarget;
+
+		if(CheckAttribute(&worldMap, sDirectSailWatchmanPath))
+		{
+			makearef(rDirectSailWatchmanTarget, worldMap.(sDirectSailWatchmanPath));
+			if(CheckAttribute(rDirectSailWatchmanTarget, "dirSailEnc"))
+			{
+				trace("DS WATCHMAN DIRSAILENC CLEAR: id=" + sDirectSailWatchmanTarget);
+				DirectSail_WatchmanCompleteTracking("dirSailEnc");
+			}
+		}
+	}
+
 	DirectSail_QuestDiagnosticsUpdate();
 	DirectSail_ArrowStatusDiagnosticsUpdate();
 	DirectSail_WatchmanHourlyUpdate();
