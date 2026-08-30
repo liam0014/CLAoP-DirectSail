@@ -37,3 +37,30 @@ void LaunchDirSailEnc()
 
 void LaunchPaperMapScreen()
 #endreplace
+
+#find
+void NewAutoSave()
+{
+	string sTag = GetEventData();
+	if(bAutoSaveStarted)
+#replacewith
+void NewAutoSave()
+{
+	string sTag = GetEventData();
+
+	// A Direct Sail MapEnter interruption can temporarily load Ship_deck with
+	// no native world-map entity behind it.  On leaving that synthetic deck,
+	// the normal LandToSea autosave is requested while both the deck and AISea
+	// are absent.  Saving in that gap produces an unloadable black-screen save.
+	// Skip only that one autosave and execute the vanilla continuation exactly
+	// as NewAutoSave() does for other unsafe save states.
+	if(sTag == "LandToSea" && CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
+	{
+		trace("DS MAPENTER AUTOSAVE SKIP: type=LandToSea");
+		DeleteAttribute(pchar, "DirectSail.MapEnterInterruptReturn");
+		AutoSave_After();
+		return;
+	}
+
+	if(bAutoSaveStarted)
+#endreplace
