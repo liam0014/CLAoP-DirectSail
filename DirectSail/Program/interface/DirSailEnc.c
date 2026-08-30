@@ -141,6 +141,11 @@ void IProcessFrame() //Interface screens cannot use event delay
         return;
     }
     else {
+        // Ordinary DirectSail encounters are unavoidable once intercepted.
+        // B_CANCEL is reused only by the storm diverter, so keep it hidden for
+        // every normal encounter frame in case the interface node is restored.
+        SetNodeUsing("B_CANCEL", false);
+
         if(!bShipsDesc && nTimeout > 1) {
             nDesc = nTimeout;
             bShipsDesc = true;
