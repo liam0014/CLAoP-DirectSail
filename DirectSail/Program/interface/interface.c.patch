@@ -48,16 +48,11 @@ void NewAutoSave()
 {
 	string sTag = GetEventData();
 
-	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
-		trace("DS SAVE DIAG: NewAutoSave tag=" + sTag + " marker=1 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
-	else
-		trace("DS SAVE DIAG: NewAutoSave tag=" + sTag + " marker=0 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
-
 	// A Direct Sail synthetic MapEnter interruption returns from Ship_deck
-	// without a native world-map entity behind it.  CLAoP requests its normal
-	// MapToSea autosave after the deck has already unloaded but before AISea is
-	// constructed.  Saving in that gap produces a save with no valid world
-	// context.  Skip exactly that one autosave and run the vanilla continuation.
+	// without a native world-map entity behind it. CLAoP requests a MapToSea
+	// autosave after the deck has unloaded but before AISea is constructed.
+	// Saving in that gap creates an unloadable save with no valid world context.
+	// Skip exactly that one autosave and run the normal after-save continuation.
 	if(sTag == "MapToSea" && CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
 	{
 		trace("DS MAPENTER AUTOSAVE SKIP: type=MapToSea");
@@ -67,32 +62,4 @@ void NewAutoSave()
 	}
 
 	if(bAutoSaveStarted)
-#endreplace
-
-#find
-bool MakeAutoSave()
-{
-	if( InterfaceStates.Launched != 0 ) {return false;}
-
-	DeleteAfterSaveFunction();
-#replacewith
-bool MakeAutoSave()
-{
-	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
-		trace("DS SAVE DIAG: MakeAutoSave marker=1 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
-	else
-		trace("DS SAVE DIAG: MakeAutoSave marker=0 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
-
-	// Some older map-triggered deck scenes use the legacy autosave API.
-	// Preserve this narrow fallback for Direct Sail synthetic deck returns.
-	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
-	{
-		trace("DS MAPENTER AUTOSAVE SKIP: legacy MakeAutoSave");
-		DeleteAttribute(pchar, "DirectSail.MapEnterInterruptReturn");
-		return false;
-	}
-
-	if( InterfaceStates.Launched != 0 ) {return false;}
-
-	DeleteAfterSaveFunction();
 #endreplace
