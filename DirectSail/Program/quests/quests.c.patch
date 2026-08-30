@@ -43,7 +43,7 @@ bool DoReloadFromWorldMapToLocation(string idLocation, string idGroup, string id
 
 	// During a Direct Sail strategic-transition pulse the old tactical sea has
 	// already been unloaded, but there is intentionally no real world-map
-	// entity to quit.  Preserve the vanilla reload request and let SeaLogin()
+	// entity to quit. Preserve the vanilla reload request and let SeaLogin()
 	// abort before creating the destination tactical sea.
 	if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
 	{
@@ -84,7 +84,7 @@ void ReloadFromWMtoL_complete()
 	if (!CheckAttribute(pchar,"tmpWDMtoLand")) return;
 
 	// Some vanilla MapEnter handlers call ReloadFromWMtoL_complete()
-	// immediately after DoReloadFromWorldMapToLocation().  During Direct Sail
+	// immediately after DoReloadFromWorldMapToLocation(). During Direct Sail
 	// that happens inside EVENT_SEA_LOGIN, before SeaLogin() has returned.
 	// Defer the actual location teleport until the current sea-to-sea login has
 	// cleanly aborted.
@@ -135,13 +135,11 @@ void DirectSail_MapEnterInterruptFinish()
 	DeleteAttribute(pchar, "DirectSail.MapEnterTo");
 
 	// The synthetic map-to-deck interruption has no real world-map entity.
-	// When this temporary deck later returns to sea, CLAoP normally requests
-	// a LandToSea autosave before the tactical sea is fully constructed.  Such
-	// a save has neither a loaded location nor AISea and reloads to a black
-	// screen.  Mark exactly this one return so interface.c can skip the unsafe
-	// autosave while still running the normal after-save continuation.
+	// When this temporary deck later returns to sea, CLAoP requests a MapToSea
+	// autosave after the deck has unloaded but before tactical sea exists.
+	// Mark exactly this return so interface.c can skip that unsafe autosave
+	// while still running the normal after-save continuation.
 	pchar.DirectSail.MapEnterInterruptReturn = true;
-	trace("DS SAVE DIAG: return marker SET before Ship_deck reload");
 
 	bSkipSeaLogin = false;
 	pchar.location = "";
