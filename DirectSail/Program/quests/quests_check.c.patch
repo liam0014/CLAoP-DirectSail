@@ -1,0 +1,70 @@
+#find
+		case "MapEnter":
+    		return IsEntity(&worldMap);
+    	break;
+#replacewith
+		case "MapEnter":
+			if(IsEntity(&worldMap)) return true;
+
+			// Instrumented Direct Sail prototype.  A one-shot MapEnter pulse is
+			// emitted only during a genuine Direct Sail sea-zone transition.
+			// Keep this first build deliberately narrow: prove one simple quest
+			// state transition (Hugo Lumbersaw) and one map-triggered deck
+			// interruption (overdue passenger) before enabling the full MapEnter
+			// population.
+			if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
+			{
+				if(CheckAttribute(pchar, "DirectSail.MapEnterCurrentQuest"))
+				{
+					sTmpString = pchar.DirectSail.MapEnterCurrentQuest;
+
+					// Once a deck/location interruption has been requested, do not let
+					// another MapEnter condition consume itself in the same check pass.
+					if(CheckAttribute(pchar, "DirectSail.MapEnterInterrupted"))
+					{
+						trace("DS MAPENTER PROTOTYPE SKIP AFTER INTERRUPT: quest=" + sTmpString);
+						return false;
+					}
+
+					if(sTmpString == "PDM_Lesopilka_Treasures_BackToVillemstad")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					if(sTmpString == "ConvoyMapPassenger")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					trace("DS MAPENTER PENDING: quest=" + sTmpString);
+				}
+			}
+
+    		return false;
+    	break;
+#endreplace
+
+#find
+        quest = GetAttributeN(quests,n);
+
+		sQuestName = GetAttributeName(quest);
+
+		if (CheckAttribute(quest,"win_condition"))
+#replacewith
+        quest = GetAttributeN(quests,n);
+
+		sQuestName = GetAttributeName(quest);
+
+		// ProcessCondition() normally receives only the condition aref, not the
+		// owning quest name.  Expose the current quest during the short Direct
+		// Sail pulse so the prototype can whitelist test cases without globally
+		// changing MapEnter semantics.
+		if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
+		{
+			pchar.DirectSail.MapEnterCurrentQuest = sQuestName;
+		}
+
+		if (CheckAttribute(quest,"win_condition"))
+#endreplace

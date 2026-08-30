@@ -1,0 +1,148 @@
+#find
+#event_handler("QuitFromWorldMap","ReloadFromWMtoL_complete");
+#event_handler(FORT_DESTROYED,"QuestFortDestroyed");
+#replacewith
+#event_handler("QuitFromWorldMap","ReloadFromWMtoL_complete");
+#event_handler("DirectSail_MapEnterInterruptFinish","DirectSail_MapEnterInterruptFinish");
+#event_handler(FORT_DESTROYED,"QuestFortDestroyed");
+#endreplace
+
+#find
+bool DoReloadFromWorldMapToLocation(string idLocation, string idGroup, string idLocator)
+{
+	// новые фичи к3 -->
+	worldMap.old = "";
+	aref arOldMapPos;
+	makearef(arOldMapPos, worldMap.old);
+
+	WdmPrepareMapForAbordage(arOldMapPos);
+	// новые фичи к3 <--
+
+	if(FindLocation(idLocation)==-1) return false;
+	pchar.tmpWDMtoLand.location = idLocation;
+	pchar.tmpWDMtoLand.group = idGroup;
+	pchar.tmpWDMtoLand.locator = idLocator;
+	QuitFromWorldMap();
+	return true;
+}
+#replacewith
+bool DoReloadFromWorldMapToLocation(string idLocation, string idGroup, string idLocator)
+{
+	// новые фичи к3 -->
+	worldMap.old = "";
+	aref arOldMapPos;
+	makearef(arOldMapPos, worldMap.old);
+
+	WdmPrepareMapForAbordage(arOldMapPos);
+	// новые фичи к3 <--
+
+	if(FindLocation(idLocation)==-1) return false;
+	pchar.tmpWDMtoLand.location = idLocation;
+	pchar.tmpWDMtoLand.group = idGroup;
+	pchar.tmpWDMtoLand.locator = idLocator;
+
+	// During a Direct Sail strategic-transition pulse the old tactical sea has
+	// already been unloaded, but there is intentionally no real world-map
+	// entity to quit. Preserve the vanilla reload request and let SeaLogin()
+	// abort before creating the destination tactical sea.
+	if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
+	{
+		pchar.DirectSail.MapEnterInterrupted = true;
+		bSkipSeaLogin = true;
+		trace("DS MAPENTER INTERRUPT REQUEST: location=" + idLocation +
+		      " group=" + idGroup +
+		      " locator=" + idLocator);
+		return true;
+	}
+
+	QuitFromWorldMap();
+	return true;
+}
+#endreplace
+
+#find
+void ReloadFromWMtoL_complete()
+{
+	if (!CheckAttribute(pchar,"tmpWDMtoLand")) return;
+	//ChangeCharacterAddressGroup( pchar, pchar.tmpWDMtoLand.location, pchar.tmpWDMtoLand.group, pchar.tmpWDMtoLand.locator );
+	//LoadLocation(&Locations[FindLocation(pchar.tmpWDMtoLand.location)]);
+	DoReloadCharacterToLocation(pchar.tmpWDMtoLand.location, pchar.tmpWDMtoLand.group, pchar.tmpWDMtoLand.locator);  // boal чтоб была заставка
+
+	if(CheckAttribute(pchar, "tmpWDMtoLand"))
+	{
+		if(FindIsland(pchar.tmpWDMtoLand.location) != -1)
+		{
+			pchar.ComeToIsland = "1";
+			QuestsCheck();
+		}
+	}
+	DeleteAttribute(pchar,"tmpWDMtoLand");   //fix boal
+}
+#replacewith
+void ReloadFromWMtoL_complete()
+{
+	if (!CheckAttribute(pchar,"tmpWDMtoLand")) return;
+
+	// Some vanilla MapEnter handlers call ReloadFromWMtoL_complete()
+	// immediately after DoReloadFromWorldMapToLocation(). During Direct Sail
+	// that happens inside EVENT_SEA_LOGIN, before SeaLogin() has returned.
+	// Defer the actual location teleport until the current sea-to-sea login has
+	// cleanly aborted.
+	if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
+	{
+		pchar.DirectSail.MapEnterReloadPending = true;
+		trace("DS MAPENTER RELOAD DEFERRED: location=" + pchar.tmpWDMtoLand.location);
+		return;
+	}
+
+	//ChangeCharacterAddressGroup( pchar, pchar.tmpWDMtoLand.location, pchar.tmpWDMtoLand.group, pchar.tmpWDMtoLand.locator );
+	//LoadLocation(&Locations[FindLocation(pchar.tmpWDMtoLand.location)]);
+	DoReloadCharacterToLocation(pchar.tmpWDMtoLand.location, pchar.tmpWDMtoLand.group, pchar.tmpWDMtoLand.locator);  // boal чтоб была заставка
+
+	if(CheckAttribute(pchar, "tmpWDMtoLand"))
+	{
+		if(FindIsland(pchar.tmpWDMtoLand.location) != -1)
+		{
+			pchar.ComeToIsland = "1";
+			QuestsCheck();
+		}
+	}
+	DeleteAttribute(pchar,"tmpWDMtoLand");   //fix boal
+}
+
+// Finish a map-triggered Direct Sail interruption after SeaLogin() has
+// returned without constructing a new tactical sea environment.
+void DirectSail_MapEnterInterruptFinish()
+{
+	if(!CheckAttribute(pchar, "tmpWDMtoLand"))
+	{
+		trace("DS MAPENTER INTERRUPT ERROR: tmpWDMtoLand missing");
+		DeleteAttribute(pchar, "DirectSail.MapEnterInterrupted");
+		DeleteAttribute(pchar, "DirectSail.MapEnterReloadPending");
+		DeleteAttribute(pchar, "DirectSail.MapEnterFrom");
+		DeleteAttribute(pchar, "DirectSail.MapEnterTo");
+		bSkipSeaLogin = false;
+		return;
+	}
+
+	trace("DS MAPENTER INTERRUPT COMPLETE: location=" + pchar.tmpWDMtoLand.location);
+
+	DeleteAttribute(pchar, "DirectSail.MapEnterPulse");
+	DeleteAttribute(pchar, "DirectSail.MapEnterCurrentQuest");
+	DeleteAttribute(pchar, "DirectSail.MapEnterInterrupted");
+	DeleteAttribute(pchar, "DirectSail.MapEnterReloadPending");
+	DeleteAttribute(pchar, "DirectSail.MapEnterFrom");
+	DeleteAttribute(pchar, "DirectSail.MapEnterTo");
+
+	// The synthetic map-to-deck interruption has no real world-map entity.
+	// When this temporary deck later returns to sea, CLAoP requests a MapToSea
+	// autosave after the deck has unloaded but before tactical sea exists.
+	// Mark exactly this return so interface.c can skip that unsafe autosave
+	// while still running the normal after-save continuation.
+	pchar.DirectSail.MapEnterInterruptReturn = true;
+
+	bSkipSeaLogin = false;
+	pchar.location = "";
+	ReloadFromWMtoL_complete();
+}
+#endreplace
