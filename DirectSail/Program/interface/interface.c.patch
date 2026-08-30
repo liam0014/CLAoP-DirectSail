@@ -48,6 +48,11 @@ void NewAutoSave()
 {
 	string sTag = GetEventData();
 
+	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
+		trace("DS SAVE DIAG: NewAutoSave tag=" + sTag + " marker=1 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
+	else
+		trace("DS SAVE DIAG: NewAutoSave tag=" + sTag + " marker=0 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
+
 	// A Direct Sail MapEnter interruption can temporarily load Ship_deck with
 	// no native world-map entity behind it.  On leaving that synthetic deck,
 	// the normal LandToSea autosave is requested while both the deck and AISea
@@ -74,6 +79,11 @@ bool MakeAutoSave()
 #replacewith
 bool MakeAutoSave()
 {
+	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
+		trace("DS SAVE DIAG: MakeAutoSave marker=1 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
+	else
+		trace("DS SAVE DIAG: MakeAutoSave marker=0 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location);
+
 	// Some map-triggered deck scenes return through CLAoP's legacy autosave
 	// API rather than Event_NewAutoSave.  During a Direct Sail synthetic map
 	// interruption this call occurs after Ship_deck has unloaded but before
