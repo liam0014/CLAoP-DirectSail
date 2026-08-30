@@ -39,10 +39,11 @@ void BI_Frame()
 	string sDirectSailWatchmanTarget;
 	string sDirectSailWatchmanPath;
 	aref rDirectSailWatchmanTarget;
+	bool bYesUpdateCommand = false;
 
 	// dirSailEnc is the authoritative marker that a persistent world-map
 	// encounter has already become the tactical encounter in front of the
-	// player.  Quest encounters deliberately remain alive on the persistent
+	// player. Quest encounters deliberately remain alive on the persistent
 	// map and therefore do not receive needDelete, so a tracked quest contact
 	// could otherwise keep reporting its old strategic-map position if the
 	// dedicated quest-start callback is missed.
@@ -66,8 +67,6 @@ void BI_Frame()
 	DirectSail_ArrowStatusDiagnosticsUpdate();
 	DirectSail_WatchmanHourlyUpdate();
 	DirectSail_WatchmanQuestRangeUpdate();
-
-	bool bYesUpdateCommand = false;
 #endreplace
 
 
