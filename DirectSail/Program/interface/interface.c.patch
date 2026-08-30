@@ -64,3 +64,30 @@ void NewAutoSave()
 
 	if(bAutoSaveStarted)
 #endreplace
+
+#find
+bool MakeAutoSave()
+{
+	if( InterfaceStates.Launched != 0 ) {return false;}
+
+	DeleteAfterSaveFunction();
+#replacewith
+bool MakeAutoSave()
+{
+	// Some map-triggered deck scenes return through CLAoP's legacy autosave
+	// API rather than Event_NewAutoSave.  During a Direct Sail synthetic map
+	// interruption this call occurs after Ship_deck has unloaded but before
+	// tactical sea exists, so the resulting save cannot be restored.  Returning
+	// false follows the vanilla MakeAutoSave() contract: callers continue the
+	// transition immediately when no save was started.
+	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
+	{
+		trace("DS MAPENTER AUTOSAVE SKIP: legacy MakeAutoSave");
+		DeleteAttribute(pchar, "DirectSail.MapEnterInterruptReturn");
+		return false;
+	}
+
+	if( InterfaceStates.Launched != 0 ) {return false;}
+
+	DeleteAfterSaveFunction();
+#endreplace
