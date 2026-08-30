@@ -29,22 +29,17 @@ void SaveGame()
 	string saveData = GetEventData();
 	DelEventHandler("evntSave","SaveGame");
 
-	// Never commit a save while CLAoP has no valid world context.  OnSave()
-	// itself treats this state as an error, and a save written here cannot be
-	// restored because there is no world map, tactical sea or loaded location
-	// to record.  Direct Sail can briefly create exactly this state while a
-	// synthetic MapEnter deck interruption returns to tactical sea.
-	if(!IsEntity(&worldMap) && !IsEntity(&AISea) && FindLoadedLocation() < 0)
+	// A synthetic Direct Sail MapEnter deck has no native world-map state to
+	// return to.  The deck-to-sea path can request its autosave while Ship_deck
+	// is still nominally loaded, but SaveEngineState() reaches OnSave() only
+	// after that deck has been torn down and before AISea exists.  Therefore the
+	// loaded-location state at this point is not a reliable safety test: the
+	// DirectSail return marker itself identifies the one save that must be
+	// suppressed.
+	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
 	{
-		if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
-		{
-			trace("DS MAPENTER SAVE BLOCK: invalid transition context");
-			DeleteAttribute(pchar, "DirectSail.MapEnterInterruptReturn");
-		}
-		else
-		{
-			trace("DS SAVE BLOCK: no valid world context");
-		}
+		trace("DS MAPENTER SAVE BLOCK: synthetic deck return");
+		DeleteAttribute(pchar, "DirectSail.MapEnterInterruptReturn");
 
 		// A transition autosave may have registered an after-save continuation.
 		// Since no engine save is being started, run that continuation ourselves
