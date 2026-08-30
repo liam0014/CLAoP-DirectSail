@@ -29,6 +29,11 @@ void SaveGame()
 	string saveData = GetEventData();
 	DelEventHandler("evntSave","SaveGame");
 
+	if(CheckAttribute(pchar, "DirectSail.MapEnterInterruptReturn"))
+		trace("DS SAVE DIAG: SaveGame marker=1 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location + " save=" + saveName);
+	else
+		trace("DS SAVE DIAG: SaveGame marker=0 locIndex=" + FindLoadedLocation() + " pchar.location=" + pchar.location + " save=" + saveName);
+
 	// A synthetic Direct Sail MapEnter deck has no native world-map state to
 	// return to.  The deck-to-sea path can request its autosave while Ship_deck
 	// is still nominally loaded, but SaveEngineState() reaches OnSave() only
