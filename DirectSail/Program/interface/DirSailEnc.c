@@ -59,7 +59,9 @@ void InitInterface(string iniName)
     SetFormatedText("MAP_CAPTION", XI_ConvertString("title_map"));
 
 	SetNodeUsing("B_OK", true);
+	SetSelectable("B_OK", true);
 	SetNodeUsing("B_CANCEL", false);
+	SetSelectable("B_CANCEL", false);
 
 
 	SetEventHandler("InterfaceBreak","ProcessBreakExit",0);
@@ -83,8 +85,14 @@ void evtDirSailStorm(bool bIsTornado)
     bStormPromptTornado = bIsTornado;
     nTimeout = 0;
 
+    // The normal layout parks B_CANCEL off-screen. Restore the two-button
+    // layout only for the storm diverter, where both choices are meaningful.
+    SetNodePosition("B_OK", 270, 432, 395, 464);
+    SetNodePosition("B_CANCEL", 405, 432, 530, 464);
     SetNodeUsing("B_OK", true);
+    SetSelectable("B_OK", true);
     SetNodeUsing("B_CANCEL", true);
+    SetSelectable("B_CANCEL", true);
     SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_OK", 0, "#" + XI_ConvertString("StopStorm"));
     SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_CANCEL", 0, "#" + XI_ConvertString("StartStorm"));
     SetCurrentNode("B_OK");
@@ -142,9 +150,13 @@ void IProcessFrame() //Interface screens cannot use event delay
     }
     else {
         // Ordinary DirectSail encounters are unavoidable once intercepted.
-        // B_CANCEL is reused only by the storm diverter, so keep it hidden for
-        // every normal encounter frame in case the interface node is restored.
+        // B_CANCEL exists only so the storm diverter can reuse this interface.
+        // Keep it both non-selectable and physically off-screen: TEXTBUTTON2
+        // can remain rendered even when SetNodeUsing(false) is applied.
         SetNodeUsing("B_CANCEL", false);
+        SetSelectable("B_CANCEL", false);
+        SetNodePosition("B_CANCEL", -1000, -1000, -875, -968);
+        SetNodePosition("B_OK", 335, 432, 465, 464);
 
         if(!bShipsDesc && nTimeout > 1) {
             nDesc = nTimeout;
