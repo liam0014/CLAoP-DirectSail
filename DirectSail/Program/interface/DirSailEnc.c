@@ -31,47 +31,6 @@ string dirOff, findType;
 object grpTrans[2];
 int grpTNnum = 0;
 
-bool DirectSail_FindPendingStormPrompt()
-{
-    int i;
-    int nWME;
-    aref WME;
-    aref rStorm;
-
-    // LaunchDirSailEnc() transfers control into the interface before the
-    // caller can reliably invoke evtDirSailStorm().  The storm encounter is
-    // already marked for consumption by checkWMEnctr(), so use that persistent
-    // world-map state as the pre-launch handoff marker.
-    if(!CheckCharacterItem(pchar, "stop_storm")) return false;
-
-    makearef(WME, worldMap.encounters);
-    nWME = GetAttributesNum(WME);
-
-    for(i = 0; i < nWME; i++)
-    {
-        rStorm = GetAttributeN(WME, i);
-
-        if(!CheckAttribute(rStorm, "type")) continue;
-        if(rStorm.type != "Storm") continue;
-        if(!CheckAttribute(rStorm, "needDelete")) continue;
-        if(rStorm.needDelete != "Reload delete storm encounter") continue;
-
-        bStormPrompt = true;
-        bStormPromptResolved = false;
-        bStormPromptTornado = false;
-
-        if(CheckAttribute(rStorm, "isTornado") && sti(rStorm.isTornado) != 0)
-        {
-            bStormPromptTornado = true;
-        }
-
-        trace("DS STORM DIVERTER PREINIT: tornado=" + bStormPromptTornado);
-        return true;
-    }
-
-    return false;
-}
-
 void InitInterface(string iniName)
 {
 	EngineLayersOffOn(true);
@@ -99,28 +58,14 @@ void InitInterface(string iniName)
 
     SetFormatedText("MAP_CAPTION", XI_ConvertString("title_map"));
 
-    if(DirectSail_FindPendingStormPrompt())
-    {
-        // Storm diverter: restore the two-button layout before the first frame.
-        SetNodePosition("B_OK", 270, 432, 395, 464);
-        SetNodePosition("B_CANCEL", 405, 432, 530, 464);
-        SetNodeUsing("B_OK", true);
-        SetSelectable("B_OK", true);
-        SetNodeUsing("B_CANCEL", true);
-        SetSelectable("B_CANCEL", true);
-        SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_OK", 0, "#" + XI_ConvertString("StopStorm"));
-        SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_CANCEL", 0, "#" + XI_ConvertString("StartStorm"));
-        SetCurrentNode("B_OK");
-
-        trace("DS STORM DIVERTER UI READY: tornado=" + bStormPromptTornado);
-    }
-    else
-    {
-        SetNodeUsing("B_OK", true);
-        SetSelectable("B_OK", true);
-        SetNodeUsing("B_CANCEL", false);
-        SetSelectable("B_CANCEL", false);
-    }
+    // Start every Direct Sail interface in its normal one-button state.
+    // Storm interception switches this to the two-button layout immediately
+    // afterwards through evtDirSailStorm(), as in the known-working Workshop
+    // version.  Do not inspect persistent encounters during interface init.
+    SetNodeUsing("B_OK", true);
+    SetSelectable("B_OK", true);
+    SetNodeUsing("B_CANCEL", false);
+    SetSelectable("B_CANCEL", false);
 
 
 	SetEventHandler("InterfaceBreak","ProcessBreakExit",0);
@@ -135,9 +80,8 @@ void InitInterface(string iniName)
 	grpTNnum = 0;
 }
 
-// Compatibility fallback for callers which can hand storm state into an
-// already-open Direct Sail interface.  Normal storm prompts are now detected
-// during InitInterface() from the persistent storm marker instead.
+// Called immediately after LaunchDirSailEnc(), matching the known-working
+// Workshop storm-diverter handoff and the existing ordinary encounter handoff.
 void evtDirSailStorm(bool bIsTornado)
 {
     bStormPrompt = true;
