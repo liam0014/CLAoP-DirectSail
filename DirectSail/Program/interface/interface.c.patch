@@ -11,55 +11,9 @@ void LaunchMapScreen()
 
 void LaunchPaperMapScreen()
 #replacewith
-extern void evtDirSailStorm(bool bIsTornado);
-
-bool DirectSail_PrepareStormInterface()
-{
-	int i;
-	int nWME;
-	bool bTornado;
-	aref WME;
-	aref rStorm;
-
-	// Storm interception marks the persistent encounter for deletion before
-	// LaunchDirSailEnc() is called. Detect that marker here, BEFORE
-	// procInterfacePrepare() changes interface/world-map state.
-	if(!CheckCharacterItem(pchar, "stop_storm")) return false;
-
-	makearef(WME, worldMap.encounters);
-	nWME = GetAttributesNum(WME);
-
-	for(i = 0; i < nWME; i++)
-	{
-		rStorm = GetAttributeN(WME, i);
-
-		if(!CheckAttribute(rStorm, "type")) continue;
-		if(rStorm.type != "Storm") continue;
-		if(!CheckAttribute(rStorm, "needDelete")) continue;
-		if(rStorm.needDelete != "Reload delete storm encounter") continue;
-
-		bTornado = false;
-		if(CheckAttribute(rStorm, "isTornado") && sti(rStorm.isTornado) != 0)
-		{
-			bTornado = true;
-		}
-
-		pchar.DirectSail.StormPrompt = 1;
-		if(bTornado)
-			pchar.DirectSail.StormPromptTornado = 1;
-		else
-			pchar.DirectSail.StormPromptTornado = 0;
-
-		trace("DS STORM DIVERTER PRELAUNCH: tornado=" + bTornado);
-		return true;
-	}
-
-	return false;
-}
-
 void LaunchMapScreen()
 {
-	Interfaces[INTERFACE_MAP].SectionName = "interface\\map.c";
+	Interfaces[INTERFACE_MAP].SectionName = "interface\map.c";
 
 	if(procInterfacePrepare(INTERFACE_MAP))
 	{
@@ -71,45 +25,13 @@ void LaunchMapScreen()
 
 void LaunchDirSailEnc()
 {
-	bool bStormPrompt;
-	bool bStormTornado;
-
-	bStormPrompt = DirectSail_PrepareStormInterface();
-	bStormTornado = false;
-	if(bStormPrompt && CheckAttribute(pchar, "DirectSail.StormPromptTornado"))
-	{
-		bStormTornado = (sti(pchar.DirectSail.StormPromptTornado) != 0);
-	}
-
-	// Always use the existing, proven Direct Sail encounter script. Ordinary
-	// and quest Watchman encounters therefore follow exactly the same path as
-	// before. For storms, inject the storm state from inside this launcher as
-	// soon as InitInterface() has completed, rather than relying on the caller
-	// in islands_loader.c to continue after the interface switch.
-	Interfaces[INTERFACE_MAP].SectionName = "interface\\DirSailEnc.c";
+	Interfaces[INTERFACE_MAP].SectionName = "interface\DirSailEnc.c";
 
 	if(procInterfacePrepare(INTERFACE_MAP))
 	{
 		nPrevInterface = -1;
 		CurrentInterface = INTERFACE_MAP;
 		InitInterface(Interfaces[CurrentInterface].IniFile);
-
-		if(bStormPrompt)
-		{
-			trace("DS STORM DIVERTER LAUNCHER CALLBACK: tornado=" + bStormTornado);
-			evtDirSailStorm(bStormTornado);
-			DeleteAttribute(pchar, "DirectSail.StormPrompt");
-			DeleteAttribute(pchar, "DirectSail.StormPromptTornado");
-		}
-	}
-	else
-	{
-		if(bStormPrompt)
-		{
-			trace("DS STORM DIVERTER PREPARE FAILED");
-			DeleteAttribute(pchar, "DirectSail.StormPrompt");
-			DeleteAttribute(pchar, "DirectSail.StormPromptTornado");
-		}
 	}
 }
 

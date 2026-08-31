@@ -64,8 +64,10 @@ void InitInterface(string iniName)
     // version.  Do not inspect persistent encounters during interface init.
     SetNodeUsing("B_OK", true);
     SetSelectable("B_OK", true);
-    SetNodeUsing("B_CANCEL", false);
-    SetSelectable("B_CANCEL", false);
+    SetNodeUsing("B_STORM_OK", false);
+    SetSelectable("B_STORM_OK", false);
+    SetNodeUsing("B_STORM_CANCEL", false);
+    SetSelectable("B_STORM_CANCEL", false);
 
 
 	SetEventHandler("InterfaceBreak","ProcessBreakExit",0);
@@ -89,17 +91,18 @@ void evtDirSailStorm(bool bIsTornado)
     bStormPromptTornado = bIsTornado;
     nTimeout = 0;
 
-    // The normal layout parks B_CANCEL off-screen. Restore the two-button
-    // layout only for the storm diverter, where both choices are meaningful.
-    SetNodePosition("B_OK", 270, 432, 395, 464);
-    SetNodePosition("B_CANCEL", 405, 432, 530, 464);
-    SetNodeUsing("B_OK", true);
-    SetSelectable("B_OK", true);
-    SetNodeUsing("B_CANCEL", true);
-    SetSelectable("B_CANCEL", true);
-    SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_OK", 0, "#" + XI_ConvertString("StopStorm"));
-    SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_CANCEL", 0, "#" + XI_ConvertString("StartStorm"));
-    SetCurrentNode("B_OK");
+    // Keep ordinary Watchman and storm choices on separate static nodes.
+    // This avoids runtime SetNodePosition calls, which caused the distorted
+    // button layout after the ordinary "Sail away" option was removed.
+    SetNodeUsing("B_OK", false);
+    SetSelectable("B_OK", false);
+    SetNodeUsing("B_STORM_OK", true);
+    SetSelectable("B_STORM_OK", true);
+    SetNodeUsing("B_STORM_CANCEL", true);
+    SetSelectable("B_STORM_CANCEL", true);
+    SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_STORM_OK", 0, "#" + XI_ConvertString("StopStorm"));
+    SendMessage(&GameInterface, "lsls", MSG_INTERFACE_MSG_TO_NODE, "B_STORM_CANCEL", 0, "#" + XI_ConvertString("StartStorm"));
+    SetCurrentNode("B_STORM_OK");
 
     trace("DS STORM DIVERTER UI READY: tornado=" + bStormPromptTornado);
 }
@@ -148,19 +151,20 @@ void IProcessFrame() //Interface screens cannot use event delay
             SetFormatedText("INFO_TEXT", totalInfo);
             SendMessage(&GameInterface,"lsl",MSG_INTERFACE_MSG_TO_NODE,"INFO_TEXT",5);
             SetFormatedText("INFO_TEXT_QUESTION", "");
-            SetCurrentNode("B_OK");
+            SetCurrentNode("B_STORM_OK");
         }
         return;
     }
     else {
         // Ordinary DirectSail encounters are unavoidable once intercepted.
-        // B_CANCEL exists only so the storm diverter can reuse this interface.
-        // Keep it both non-selectable and physically off-screen: TEXTBUTTON2
-        // can remain rendered even when SetNodeUsing(false) is applied.
-        SetNodeUsing("B_CANCEL", false);
-        SetSelectable("B_CANCEL", false);
-        SetNodePosition("B_CANCEL", -1000, -1000, -875, -968);
-        SetNodePosition("B_OK", 335, 432, 465, 464);
+        // B_OK is a dedicated, statically-centred single button; the storm
+        // choice buttons remain hidden unless evtDirSailStorm() is called.
+        SetNodeUsing("B_OK", true);
+        SetSelectable("B_OK", true);
+        SetNodeUsing("B_STORM_OK", false);
+        SetSelectable("B_STORM_OK", false);
+        SetNodeUsing("B_STORM_CANCEL", false);
+        SetSelectable("B_STORM_CANCEL", false);
 
         if(!bShipsDesc && nTimeout > 1) {
             nDesc = nTimeout;
@@ -838,12 +842,12 @@ void ProcCommand()
     {
         if(comName == "activate")
         {
-            if(nodName == "B_OK")
+            if(nodName == "B_STORM_OK")
             {
                 DirectSail_StormPromptAvoid();
                 return;
             }
-            if(nodName == "B_CANCEL")
+            if(nodName == "B_STORM_CANCEL")
             {
                 DirectSail_StormPromptAgainst();
                 return;
@@ -852,12 +856,12 @@ void ProcCommand()
 
         if(comName == "click")
         {
-            if(nodName == "B_OK")
+            if(nodName == "B_STORM_OK")
             {
                 DirectSail_StormPromptAvoid();
                 return;
             }
-            if(nodName == "B_CANCEL")
+            if(nodName == "B_STORM_CANCEL")
             {
                 DirectSail_StormPromptAgainst();
                 return;
