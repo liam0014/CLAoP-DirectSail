@@ -6,12 +6,13 @@
 		case "MapEnter":
 			if(IsEntity(&worldMap)) return true;
 
-			// Instrumented Direct Sail prototype.  A one-shot MapEnter pulse is
-			// emitted only during a genuine Direct Sail sea-zone transition.
-			// Keep this first build deliberately narrow: prove one simple quest
-			// state transition (Hugo Lumbersaw) and one map-triggered deck
-			// interruption (overdue passenger) before enabling the full MapEnter
-			// population.
+			// Direct Sail emits a one-shot synthetic MapEnter pulse only at a
+			// genuine sea-zone transition. Most vanilla MapEnter conditions use
+			// the event as a strategic-travel / leave-sea sequencing hook and do
+			// not actually require a live world-map entity, so allow those by
+			// default. Keep a small explicit denylist for callbacks whose audited
+			// implementations genuinely require the native world map or are part
+			// of the Peter Blood world-map tutorial itself.
 			if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
 			{
 				if(CheckAttribute(pchar, "DirectSail.MapEnterCurrentQuest"))
@@ -22,23 +23,28 @@
 					// another MapEnter condition consume itself in the same check pass.
 					if(CheckAttribute(pchar, "DirectSail.MapEnterInterrupted"))
 					{
-						trace("DS MAPENTER PROTOTYPE SKIP AFTER INTERRUPT: quest=" + sTmpString);
+						trace("DS MAPENTER SKIP AFTER INTERRUPT: quest=" + sTmpString);
 						return false;
 					}
 
-					if(sTmpString == "PDM_Lesopilka_Treasures_BackToVillemstad")
+					// Known native-world-map dependencies. These callbacks either test
+					// IsEntity(&worldMap) themselves before doing their real work or
+					// intentionally teach/use the actual Peter Blood world map.
+					if(sTmpString == "time_over_Beliz_attack_Map_01" ||
+					   sTmpString == "time_over_Beliz_attack_Map_02" ||
+					   sTmpString == "PQ8_PanamaTimerOver_01" ||
+					   sTmpString == "PQ8_PanamaTimerOver_02" ||
+					   sTmpString == "SeaPearl_FirstTime_Late_01" ||
+					   sTmpString == "PGGQuest1_Time2Late_01" ||
+					   sTmpString == "BloodLine_GlobalTutor_WorldmapTutorial" ||
+					   sTmpString == "BloodLine_GlobalTutor_OnExitToMapAgain")
 					{
-						trace("DS MAPENTER FIRE: quest=" + sTmpString);
-						return true;
+						trace("DS MAPENTER DENYLIST: quest=" + sTmpString);
+						return false;
 					}
 
-					if(sTmpString == "ConvoyMapPassenger")
-					{
-						trace("DS MAPENTER FIRE: quest=" + sTmpString);
-						return true;
-					}
-
-					trace("DS MAPENTER PENDING: quest=" + sTmpString);
+					trace("DS MAPENTER FIRE: quest=" + sTmpString);
+					return true;
 				}
 			}
 
@@ -58,9 +64,8 @@
 		sQuestName = GetAttributeName(quest);
 
 		// ProcessCondition() normally receives only the condition aref, not the
-		// owning quest name.  Expose the current quest during the short Direct
-		// Sail pulse so the prototype can whitelist test cases without globally
-		// changing MapEnter semantics.
+		// owning quest name. Expose the current quest during the short Direct
+		// Sail pulse so MapEnter can apply the audited denylist above.
 		if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
 		{
 			pchar.DirectSail.MapEnterCurrentQuest = sQuestName;
