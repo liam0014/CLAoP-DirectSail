@@ -1,8 +1,0 @@
-#find
-Velocidade do navio no mapa global aumentada em 5%.
-}
-#replacewith
-Velocidade do navio no mapa global aumentada em 5%.
-Velocidade de navegação de todos os navios da frota no mar aumentada em 1% fora de combate.
-}
-#endreplace
