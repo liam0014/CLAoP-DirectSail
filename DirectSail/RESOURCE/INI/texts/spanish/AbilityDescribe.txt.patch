@@ -1,0 +1,8 @@
+#find
+La velocidad del barco en el mapa global aumenta un 5%.
+}
+#replacewith
+La velocidad del barco en el mapa global aumenta un 5%.
+La velocidad de navegación de todos los barcos de la flota en el mar aumenta un 1% fuera de combate.
+}
+#endreplace
