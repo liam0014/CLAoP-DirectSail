@@ -64,7 +64,6 @@ void BI_Frame()
 	}
 
 	DirectSail_QuestDiagnosticsUpdate();
-	DirectSail_ArrowStatusDiagnosticsUpdate();
 	DirectSail_WatchmanHourlyUpdate();
 	DirectSail_WatchmanQuestRangeUpdate();
 #endreplace
