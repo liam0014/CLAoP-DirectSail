@@ -39,13 +39,16 @@
 	//
 	// Direct Sail sea-zone transitions call SeaLogin() after the old tactical
 	// sea has been unloaded but before worldMap.island is updated to the new
-	// zone.  At this exact point pchar.location already contains the destination
+	// zone. At this exact point pchar.location already contains the destination
 	// island/sea-region, so pchar.location != worldMap.island identifies the
 	// strategic-travel boundary without creating a real world-map entity.
 	//
-	// Prototype 1 deliberately enables this bridge only when one of the two
-	// validation quests is actually pending: Hugo Lumbersaw's return stage or
-	// the overdue passenger deck scene.  Other MapEnter hooks remain untouched.
+	// Most vanilla MapEnter quest conditions use entering the map as a generic
+	// strategic-travel / leave-sea event rather than depending on the world-map
+	// entity itself. Emit a synthetic pulse for every genuine Direct Sail zone
+	// transition and let quests_check.c apply the small audited denylist. Honour
+	// bQuestDisableMapEnter so scripted sequences which deliberately forbid the
+	// native map cannot be advanced by Direct Sail either.
 	if(!IsEntity(&worldMap))
 	{
 		if(sIslandID != "")
@@ -54,8 +57,11 @@
 			{
 				if(worldMap.island != sIslandID)
 				{
-					if(CheckAttribute(pchar, "quest.PDM_Lesopilka_Treasures_BackToVillemstad") ||
-					   CheckAttribute(pchar, "quest.ConvoyMapPassenger"))
+					if(bQuestDisableMapEnter)
+					{
+						trace("DS MAPENTER PULSE BLOCKED: quest map lock from=" + worldMap.island + " to=" + sIslandID);
+					}
+					else
 					{
 						if(CheckAttribute(&worldMap, "islands." + sIslandID + ".position.x") &&
 						   CheckAttribute(&worldMap, "islands." + sIslandID + ".position.z"))
@@ -64,7 +70,7 @@
 							pchar.DirectSail.MapEnterTo = sIslandID;
 
 							// Rebuild the destination strategic-map coordinate context from
-							// the SeaLogin data.  WdmPrepareMapForAbordage() expects both
+							// the SeaLogin data. WdmPrepareMapForAbordage() expects both
 							// worldMap.zeroX/Z and the temporary worldMap.island.x/z pair.
 							worldMap.zeroX = worldMap.islands.(sIslandID).position.x;
 							worldMap.zeroZ = worldMap.islands.(sIslandID).position.z;
