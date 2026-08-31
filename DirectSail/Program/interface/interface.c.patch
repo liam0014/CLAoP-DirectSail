@@ -11,6 +11,8 @@ void LaunchMapScreen()
 
 void LaunchPaperMapScreen()
 #replacewith
+extern void evtDirSailStorm(bool bIsTornado);
+
 bool DirectSail_PrepareStormInterface()
 {
 	int i;
@@ -21,8 +23,7 @@ bool DirectSail_PrepareStormInterface()
 
 	// Storm interception marks the persistent encounter for deletion before
 	// LaunchDirSailEnc() is called. Detect that marker here, BEFORE
-	// procInterfacePrepare() changes interface/world-map state. This is the
-	// reliable pre-launch boundary that the old Workshop storm dialogue had.
+	// procInterfacePrepare() changes interface/world-map state.
 	if(!CheckCharacterItem(pchar, "stop_storm")) return false;
 
 	makearef(WME, worldMap.encounters);
@@ -36,7 +37,6 @@ bool DirectSail_PrepareStormInterface()
 		if(rStorm.type != "Storm") continue;
 		if(!CheckAttribute(rStorm, "needDelete")) continue;
 		if(rStorm.needDelete != "Reload delete storm encounter") continue;
-		if(CheckAttribute(rStorm, "dsStormPromptLaunched")) continue;
 
 		bTornado = false;
 		if(CheckAttribute(rStorm, "isTornado") && sti(rStorm.isTornado) != 0)
@@ -44,10 +44,6 @@ bool DirectSail_PrepareStormInterface()
 			bTornado = true;
 		}
 
-		// One-shot transport into the dedicated storm interface. The encounter
-		// marker prevents a second ordinary Watchman launch from mistaking the
-		// already-consumed storm for a fresh storm prompt before cleanup runs.
-		rStorm.dsStormPromptLaunched = true;
 		pchar.DirectSail.StormPrompt = 1;
 		if(bTornado)
 			pchar.DirectSail.StormPromptTornado = 1;
@@ -75,19 +71,45 @@ void LaunchMapScreen()
 
 void LaunchDirSailEnc()
 {
-	// Keep ordinary/quest Watchman encounters on their existing interface.
-	// Only a storm already marked by CheckIslandChange is routed to the
-	// dedicated two-button storm interface.
-	if(DirectSail_PrepareStormInterface())
-		Interfaces[INTERFACE_MAP].SectionName = "interface\\DirSailStormEnc.c";
-	else
-		Interfaces[INTERFACE_MAP].SectionName = "interface\\DirSailEnc.c";
+	bool bStormPrompt;
+	bool bStormTornado;
+
+	bStormPrompt = DirectSail_PrepareStormInterface();
+	bStormTornado = false;
+	if(bStormPrompt && CheckAttribute(pchar, "DirectSail.StormPromptTornado"))
+	{
+		bStormTornado = (sti(pchar.DirectSail.StormPromptTornado) != 0);
+	}
+
+	// Always use the existing, proven Direct Sail encounter script. Ordinary
+	// and quest Watchman encounters therefore follow exactly the same path as
+	// before. For storms, inject the storm state from inside this launcher as
+	// soon as InitInterface() has completed, rather than relying on the caller
+	// in islands_loader.c to continue after the interface switch.
+	Interfaces[INTERFACE_MAP].SectionName = "interface\\DirSailEnc.c";
 
 	if(procInterfacePrepare(INTERFACE_MAP))
 	{
 		nPrevInterface = -1;
 		CurrentInterface = INTERFACE_MAP;
 		InitInterface(Interfaces[CurrentInterface].IniFile);
+
+		if(bStormPrompt)
+		{
+			trace("DS STORM DIVERTER LAUNCHER CALLBACK: tornado=" + bStormTornado);
+			evtDirSailStorm(bStormTornado);
+			DeleteAttribute(pchar, "DirectSail.StormPrompt");
+			DeleteAttribute(pchar, "DirectSail.StormPromptTornado");
+		}
+	}
+	else
+	{
+		if(bStormPrompt)
+		{
+			trace("DS STORM DIVERTER PREPARE FAILED");
+			DeleteAttribute(pchar, "DirectSail.StormPrompt");
+			DeleteAttribute(pchar, "DirectSail.StormPromptTornado");
+		}
 	}
 }
 
