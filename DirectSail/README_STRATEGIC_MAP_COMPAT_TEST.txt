@@ -1,11 +1,11 @@
-DirectSail Strategic-Map Compatibility - Prototype 1
-====================================================
+DirectSail Strategic-Map Compatibility
+======================================
 
 STATUS
 ------
-TEST BUILD ONLY.  This branch is intentionally not merged into main.
+Broad MapEnter compatibility build.
 
-Prototype 1 validates two different CLAoP MapEnter behaviours:
+The original prototype validated two representative behaviours:
 
 1. Hugo Lumbersaw / The Reformed Pirate
    PDM_Lesopilka_Treasures_BackToVillemstad
@@ -15,121 +15,120 @@ Prototype 1 validates two different CLAoP MapEnter behaviours:
    ConvoyMapPassenger -> AllPassengerDeck
    - MapEnter interrupts strategic travel and reloads to Ship_deck
 
-All other MapEnter quests remain pending in this prototype.
+Both paths have been tested successfully, including returning from the synthetic
+Ship_deck scene without creating the invalid MapToSea autosave.
 
-CHANGED MOD PATCH FILES
------------------------
-These are complete replacement .patch files.  When testing an existing
-DirectSail installation, overwrite/copy these paths from this branch:
+BROAD MAPENTER COMPATIBILITY
+----------------------------
+A source audit found that most CLAoP MapEnter conditions use MapEnter as a
+strategic-travel / leave-sea sequencing event and do not require a live native
+world-map entity.
 
-    DirectSail\Program\sea_ai\sea.c.patch
-    DirectSail\Program\quests\quests.c.patch
-    DirectSail\Program\quests\quests_check.c.patch
+DirectSail therefore now emits a one-shot synthetic MapEnter pulse on every
+genuine sea-zone transition, provided the game has not set the hard quest map
+lock bQuestDisableMapEnter.
 
-The islands_loader patch is NOT changed by Prototype 1.
+During the pulse, MapEnter conditions are allowed by default.  The following
+audited conditions remain explicitly denied because their callbacks genuinely
+require the native world map or are part of the Peter Blood world-map tutorial:
 
-HOW THE PROTOTYPE WORKS
------------------------
-During a normal DirectSail sea-zone transition the old tactical sea is already
-unloaded when SeaLogin() begins.  SeaLogin() sets pchar.location to the new
-island/sea-region and then raises EVENT_SEA_LOGIN before it constructs the new
-sea environment.
+    time_over_Beliz_attack_Map_01
+    time_over_Beliz_attack_Map_02
+    PQ8_PanamaTimerOver_01
+    PQ8_PanamaTimerOver_02
+    SeaPearl_FirstTime_Late_01
+    PGGQuest1_Time2Late_01
+    BloodLine_GlobalTutor_WorldmapTutorial
+    BloodLine_GlobalTutor_OnExitToMapAgain
 
-At that boundary Prototype 1 temporarily marks a Direct Sail MapEnter pulse,
-reconstructs the destination world-map-equivalent coordinates, and lets the
-normal QuestsCheck() event run.
+These exclusions should continue to require native world-map use or separate
+DirectSail-specific compatibility work.
 
-quests_check.c.patch permits MapEnter to become true only for the two test
-quests above.  Other active MapEnter conditions are logged but not consumed.
+This does NOT solve world-map dependencies which do not use MapEnter, such as
+systems based on actual world-map proximity, coordinates or movement.  Known
+examples include Lost Ships City / Justice Island approach logic and Royal
+Jackpot positional checks.
 
-If the quest requests a world-map-to-location interruption, quests.c.patch
-preserves that reload request, tells SeaLogin() not to construct the new sea,
-and completes the location reload immediately afterwards.
-
-HUGO TEST
----------
-Use a save where Hugo is still a passenger after the Dominica treasure stage,
-before manually entering the vanilla world map to fix the quest.
-
-DirectSail until a genuine sea-zone transition occurs.
-
-Expected compile.log lines include:
-
-    DS MAPENTER PULSE: from=... to=...
-    DS MAPENTER FIRE: quest=PDM_Lesopilka_Treasures_BackToVillemstad
-    DS MAPENTER CONTINUE: destination=...
-
-Then enter Willemstad town normally.  Hugo's final conversation should now be
-armed without having visited the strategic world map.
-
-PASSENGER TEST - NORMAL METHOD
-------------------------------
-Find and accept the repeatable tavern passenger job whose quest-log title is:
-
-    Deliver the passenger named <name> to <city>
-
-Do NOT deliver the passenger.  Let the original delivery deadline expire.
-The game then arms ConvoyMapPassenger and waits for MapEnter so the passenger
-can call you to the ship deck.
-
-Remain in DirectSail and cross a genuine sea-zone boundary.
-
-Expected compile.log lines include:
-
-    DS MAPENTER PULSE: from=... to=...
-    DS MAPENTER FIRE: quest=ConvoyMapPassenger
-    DS MAPENTER INTERRUPT REQUEST: location=Ship_deck group=goto locator=goto5
-    DS MAPENTER RELOAD DEFERRED: location=Ship_deck
-    DS MAPENTER INTERRUPT HANDOFF: location=Ship_deck
-    DS MAPENTER INTERRUPT COMPLETE: location=Ship_deck
-
-Expected gameplay:
-- you are taken to your ship deck;
-- the overdue passenger speaks to you;
-- choosing to continue the delivery grants another seven days;
-- the reward is reduced;
-- after leaving the deck, normal sea travel should resume.
-
-PASSENGER TEST - QUICK ONE-DAY HELPER
--------------------------------------
-The branch also contains a TEST-ONLY helper at:
-
-    TestOnly\PassengerDeadline1Day\Program\dialogs\convoy_passenger.c.patch
-
-To use it, copy that file temporarily to:
-
-    DirectSail\Program\dialogs\convoy_passenger.c.patch
-
-Then accept a NEW passenger-delivery job.  Its initial deadline will be one
-in-game day.  The compile log will contain:
-
-    DS TEST PASSENGER: initial deadline forced to 1 day
-
-After the day expires, remain in DirectSail and cross a sea-zone boundary.
-Remove the test-only patch when the passenger test is finished.
-
-CONTROL TEST
+HOW IT WORKS
 ------------
-Cross several normal sea-zone boundaries when neither Hugo nor an overdue
-passenger MapEnter condition is pending.
+During a normal DirectSail sea-zone transition the old tactical sea is already
+unloaded when SeaLogin() begins.  SeaLogin() knows the new island/sea-region and
+raises EVENT_SEA_LOGIN before constructing the destination tactical sea.
 
-There should be no gameplay interruption and DirectSail transitions should
-continue exactly as before.
+At that boundary DirectSail reconstructs the destination strategic-map position,
+marks DirectSail.MapEnterPulse, and lets the normal quest-check event run.
+
+quests_check.c.patch exposes the current quest name while that pulse is active.
+MapEnter then:
+
+- returns true for ordinary audited-compatible quest conditions;
+- returns false for the explicit denylist above;
+- returns false for any later MapEnter condition once a deck/location
+  interruption has already been requested in the same quest-check pass.
+
+If a callback calls DoReloadFromWorldMapToLocation(), quests.c.patch preserves
+the reload request, aborts construction of the destination tactical sea, and
+finishes the location reload immediately after SeaLogin() returns.
+
+When a synthetic Ship_deck interruption later returns to sea, interface.c.patch
+skips only the unsafe MapToSea autosave associated with that synthetic return,
+then executes the normal after-save continuation so tactical sailing resumes.
+
+RECOMMENDED REGRESSION TESTS
+----------------------------
+1. Ordinary DirectSail transition
+   Cross a normal sea-zone boundary with no expected quest event.
+
+   Expected:
+       DS MAPENTER PULSE: from=... to=...
+       DS MAPENTER CONTINUE: destination=...
+
+   There should be no gameplay interruption.
+
+2. Hugo / The Reformed Pirate
+   Use a save where Hugo is still a passenger after the Dominica treasure stage.
+   Cross a genuine DirectSail sea-zone transition.
+
+   Expected:
+       DS MAPENTER FIRE: quest=PDM_Lesopilka_Treasures_BackToVillemstad
+
+   Hugo's Willemstad return stage should advance without entering the native map.
+
+3. Overdue passenger
+   Use a save with ConvoyMapPassenger pending and cross a sea-zone boundary.
+
+   Expected:
+       DS MAPENTER FIRE: quest=ConvoyMapPassenger
+       DS MAPENTER INTERRUPT REQUEST: location=Ship_deck ...
+       DS MAPENTER RELOAD DEFERRED: location=Ship_deck
+       DS MAPENTER INTERRUPT HANDOFF: location=Ship_deck
+       DS MAPENTER INTERRUPT COMPLETE: location=Ship_deck
+       DS MAPENTER AUTOSAVE SKIP: type=MapToSea
+
+   After the dialogue, tactical sea should resume normally and no invalid save
+   should be created.
+
+4. Save/reload control
+   After returning to tactical sea from an interruption, create a normal save,
+   reload it, and confirm DirectSail continues normally.
 
 DIAGNOSTICS
 -----------
-Prototype 1 uses these trace prefixes:
+Useful trace prefixes:
 
     DS MAPENTER PULSE
+    DS MAPENTER PULSE BLOCKED
     DS MAPENTER FIRE
-    DS MAPENTER PENDING
-    DS MAPENTER PROTOTYPE SKIP AFTER INTERRUPT
+    DS MAPENTER DENYLIST
+    DS MAPENTER SKIP AFTER INTERRUPT
     DS MAPENTER INTERRUPT REQUEST
     DS MAPENTER RELOAD DEFERRED
     DS MAPENTER INTERRUPT HANDOFF
     DS MAPENTER INTERRUPT COMPLETE
+    DS MAPENTER AUTOSAVE SKIP
     DS MAPENTER CONTINUE
     DS MAPENTER ERROR
 
-If a test fails, save the compile.log from that session before restarting the
-game and provide it for the next build.
+If an unexpected quest advances incorrectly, preserve the compile.log.  The
+DS MAPENTER FIRE line identifies the newly-enabled quest condition which can be
+reviewed and, if necessary, added to the denylist.
