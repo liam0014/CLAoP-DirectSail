@@ -1,5 +1,8 @@
 # Caribbean Legend: Age of Pirates — Direct Sail
 
+> [!WARNING]
+> **Save dependency:** Once Direct Sail has been used in a save, the mod cannot currently be uninstalled for that save. Disabling or removing Direct Sail may prevent the save from loading.
+
 **Current target: Caribbean Legend: Age of Pirates 1.2 Beta — Hotfix #1 (Build 25045685)**
 
 Direct Sail restores and expands the game's dormant real-time island-to-island sailing system.
