@@ -42,15 +42,6 @@
 // Equivalent to DirSailEnc.c's 2000 tactical-unit Warring pairing radius.
 #define DS_WATCHMAN_WARRING_TACTICAL_RADIUS_SQ  4000000.0
 
-// Fixed-size nearest-contact buffer. This avoids relying on the arbitrary
-// worldMap.encounters attribute order.
-object DSWatchmanSorted[8];
-
-// Runtime-only guard used to clear Watchman UI state across save loads.
-// The target itself lives on pchar, and Storm can retain attributes which are
-// absent from an older save; encounter IDs are also reused between saves.
-bool bDirectSailWatchmanResetAfterLoad = false;
-
 string DirectSail_WatchmanText(string sKey)
 {
     int iFile;
@@ -2014,35 +2005,15 @@ void DirectSail_WatchmanBuildDirectionIcons()
     BattleInterface.UserIcons.ui8.note = LanguageConvertString(iCommandsFile, "sea_SailNW");
 }
 
-void DirectSail_WatchmanInsertSorted(string sID, float fDistSq, int iLimit)
-{
-    int i;
-    int j;
-
-    for(i = 0; i < iLimit; i++)
-    {
-        if(DSWatchmanSorted[i].id == "" ||
-           fDistSq < stf(DSWatchmanSorted[i].dist))
-        {
-            for(j = iLimit - 1; j > i; j--)
-            {
-                DSWatchmanSorted[j].id = DSWatchmanSorted[j - 1].id;
-                DSWatchmanSorted[j].dist = DSWatchmanSorted[j - 1].dist;
-            }
-
-            DSWatchmanSorted[i].id = sID;
-            DSWatchmanSorted[i].dist = fDistSq;
-            return;
-        }
-    }
-}
-
 int DirectSail_WatchmanBuildContacts()
 {
     aref WME;
     aref rEnc;
+    object aSorted[DS_WATCHMAN_MAX_CONTACTS];
 
     int i;
+    int j;
+    int k;
     int iNum;
     int iScale;    int iContactLimit;
     int iContacts;
@@ -2073,8 +2044,8 @@ int DirectSail_WatchmanBuildContacts()
 
     for(i = 0; i < DS_WATCHMAN_MAX_CONTACTS; i++)
     {
-        DSWatchmanSorted[i].id = "";
-        DSWatchmanSorted[i].dist = 2500000000.0;
+        aSorted[i].id = "";
+        aSorted[i].dist = 2500000000.0;
     }
 
     if(!CheckAttribute(&worldMap, "island") ||
@@ -2135,7 +2106,23 @@ int DirectSail_WatchmanBuildContacts()
         if(fDistSq > DS_WATCHMAN_RADIUS_SQ) continue;
 
         sID = GetAttributeName(rEnc);
-        DirectSail_WatchmanInsertSorted(sID, fDistSq, iContactLimit);
+
+        for(j = 0; j < iContactLimit; j++)
+        {
+            if(aSorted[j].id == "" ||
+               fDistSq < stf(aSorted[j].dist))
+            {
+                for(k = iContactLimit - 1; k > j; k--)
+                {
+                    aSorted[k].id = aSorted[k - 1].id;
+                    aSorted[k].dist = aSorted[k - 1].dist;
+                }
+
+                aSorted[j].id = sID;
+                aSorted[j].dist = fDistSq;
+                break;
+            }
+        }
     }
 
     // Second pass: build UserIcons nearest-first.
@@ -2143,7 +2130,7 @@ int DirectSail_WatchmanBuildContacts()
 
     for(i = 0; i < iContactLimit; i++)
     {
-        sID = DSWatchmanSorted[i].id;
+        sID = aSorted[i].id;
         if(sID == "") break;
 
         sPath = "encounters." + sID;
@@ -2151,7 +2138,7 @@ int DirectSail_WatchmanBuildContacts()
 
         makearef(rEnc, worldMap.(sPath));
 
-        fDistSq = stf(DSWatchmanSorted[i].dist);
+        fDistSq = stf(aSorted[i].dist);
         fDx = stf(rEnc.x) - fPlayerX;
         fDz = stf(rEnc.z) - fPlayerZ;
 
@@ -2406,7 +2393,6 @@ void DirectSail_WatchmanPrepareLoad()
     if(CheckAttribute(pchar, "DirectSail.QuestExpiryDeferred"))
         DeleteAttribute(pchar, "DirectSail.QuestExpiryDeferred");
 
-    bDirectSailWatchmanResetAfterLoad = true;
     trace("DS WATCHMAN LOAD PREPARE");
 }
 
@@ -2423,7 +2409,6 @@ void DirectSail_WatchmanFinishLoad()
     // quest hours.
     SaveCurrentQuestDateParam("WordMapEncounters_DailyUpdate");
 
-    bDirectSailWatchmanResetAfterLoad = false;
     trace("DS WATCHMAN LOAD RESET");
     trace("DS QUEST LIFETIME LOAD RESET");
 }
@@ -2601,11 +2586,6 @@ void DirectSail_WatchmanSelect(string sID)
 
 void DirectSail_WatchmanHourlyUpdate()
 {
-    if(bDirectSailWatchmanResetAfterLoad)
-    {
-        DirectSail_WatchmanFinishLoad();
-    }
-
     // First age encounters which already existed during the elapsed game time.
     // Then materialise any newly-created quest queue entries so they start with
     // their full timeout rather than inheriting time from before creation.

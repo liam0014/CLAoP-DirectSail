@@ -106,7 +106,10 @@
 		if(CheckAttribute(pchar, "DirectSail.MapEnterInterrupted"))
 		{
 			trace("DS MAPENTER INTERRUPT HANDOFF: location=" + pchar.tmpWDMtoLand.location);
-			PostEvent("DirectSail_MapEnterInterruptFinish", 1);
+			// Reuse the vanilla deferred world-map-to-location event. Adding a
+			// DirectSail-only #event_handler changes Storm's saved __eventsData
+			// table and makes the resulting save unsafe to load without the mod.
+			PostEvent("QuitFromWorldMap", 1);
 		}
 		else
 		{

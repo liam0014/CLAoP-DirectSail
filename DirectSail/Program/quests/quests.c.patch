@@ -1,13 +1,4 @@
 #find
-#event_handler("QuitFromWorldMap","ReloadFromWMtoL_complete");
-#event_handler(FORT_DESTROYED,"QuestFortDestroyed");
-#replacewith
-#event_handler("QuitFromWorldMap","ReloadFromWMtoL_complete");
-#event_handler("DirectSail_MapEnterInterruptFinish","DirectSail_MapEnterInterruptFinish");
-#event_handler(FORT_DESTROYED,"QuestFortDestroyed");
-#endreplace
-
-#find
 bool DoReloadFromWorldMapToLocation(string idLocation, string idGroup, string idLocator)
 {
 	// новые фичи к3 -->
@@ -81,7 +72,19 @@ void ReloadFromWMtoL_complete()
 #replacewith
 void ReloadFromWMtoL_complete()
 {
-	if (!CheckAttribute(pchar,"tmpWDMtoLand")) return;
+	if (!CheckAttribute(pchar,"tmpWDMtoLand"))
+	{
+		if(CheckAttribute(pchar, "DirectSail.MapEnterInterrupted"))
+		{
+			trace("DS MAPENTER INTERRUPT ERROR: tmpWDMtoLand missing");
+			DeleteAttribute(pchar, "DirectSail.MapEnterInterrupted");
+			DeleteAttribute(pchar, "DirectSail.MapEnterReloadPending");
+			DeleteAttribute(pchar, "DirectSail.MapEnterFrom");
+			DeleteAttribute(pchar, "DirectSail.MapEnterTo");
+			bSkipSeaLogin = false;
+		}
+		return;
+	}
 
 	// Some vanilla MapEnter handlers call ReloadFromWMtoL_complete()
 	// immediately after DoReloadFromWorldMapToLocation(). During Direct Sail
@@ -93,6 +96,28 @@ void ReloadFromWMtoL_complete()
 		pchar.DirectSail.MapEnterReloadPending = true;
 		trace("DS MAPENTER RELOAD DEFERRED: location=" + pchar.tmpWDMtoLand.location);
 		return;
+	}
+
+	// SeaLogin() posts the existing vanilla QuitFromWorldMap event after the
+	// synthetic MapEnter pulse has returned and the old tactical sea has been
+	// fully unloaded. Complete Direct Sail's interruption bookkeeping here,
+	// then continue through the normal vanilla location reload below.
+	if(CheckAttribute(pchar, "DirectSail.MapEnterInterrupted"))
+	{
+		trace("DS MAPENTER INTERRUPT COMPLETE: location=" + pchar.tmpWDMtoLand.location);
+
+		DeleteAttribute(pchar, "DirectSail.MapEnterCurrentQuest");
+		DeleteAttribute(pchar, "DirectSail.MapEnterInterrupted");
+		DeleteAttribute(pchar, "DirectSail.MapEnterReloadPending");
+		DeleteAttribute(pchar, "DirectSail.MapEnterFrom");
+		DeleteAttribute(pchar, "DirectSail.MapEnterTo");
+
+		// The synthetic map-to-deck interruption has no real world-map entity.
+		// Mark its return so interface.c can skip the unsafe MapToSea autosave.
+		pchar.DirectSail.MapEnterInterruptReturn = true;
+
+		bSkipSeaLogin = false;
+		pchar.location = "";
 	}
 
 	//ChangeCharacterAddressGroup( pchar, pchar.tmpWDMtoLand.location, pchar.tmpWDMtoLand.group, pchar.tmpWDMtoLand.locator );
@@ -108,41 +133,5 @@ void ReloadFromWMtoL_complete()
 		}
 	}
 	DeleteAttribute(pchar,"tmpWDMtoLand");   //fix boal
-}
-
-// Finish a map-triggered Direct Sail interruption after SeaLogin() has
-// returned without constructing a new tactical sea environment.
-void DirectSail_MapEnterInterruptFinish()
-{
-	if(!CheckAttribute(pchar, "tmpWDMtoLand"))
-	{
-		trace("DS MAPENTER INTERRUPT ERROR: tmpWDMtoLand missing");
-		DeleteAttribute(pchar, "DirectSail.MapEnterInterrupted");
-		DeleteAttribute(pchar, "DirectSail.MapEnterReloadPending");
-		DeleteAttribute(pchar, "DirectSail.MapEnterFrom");
-		DeleteAttribute(pchar, "DirectSail.MapEnterTo");
-		bSkipSeaLogin = false;
-		return;
-	}
-
-	trace("DS MAPENTER INTERRUPT COMPLETE: location=" + pchar.tmpWDMtoLand.location);
-
-	DeleteAttribute(pchar, "DirectSail.MapEnterPulse");
-	DeleteAttribute(pchar, "DirectSail.MapEnterCurrentQuest");
-	DeleteAttribute(pchar, "DirectSail.MapEnterInterrupted");
-	DeleteAttribute(pchar, "DirectSail.MapEnterReloadPending");
-	DeleteAttribute(pchar, "DirectSail.MapEnterFrom");
-	DeleteAttribute(pchar, "DirectSail.MapEnterTo");
-
-	// The synthetic map-to-deck interruption has no real world-map entity.
-	// When this temporary deck later returns to sea, CLAoP requests a MapToSea
-	// autosave after the deck has unloaded but before tactical sea exists.
-	// Mark exactly this return so interface.c can skip that unsafe autosave
-	// while still running the normal after-save continuation.
-	pchar.DirectSail.MapEnterInterruptReturn = true;
-
-	bSkipSeaLogin = false;
-	pchar.location = "";
-	ReloadFromWMtoL_complete();
 }
 #endreplace
