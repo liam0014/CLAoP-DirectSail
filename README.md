@@ -10,7 +10,7 @@ Instead of travelling through the global map, you can sail directly between isla
 >
 > The current GitHub and Steam Workshop versions target the official release of **Caribbean Legend: Age of Pirates 1.2**.
 >
-> Direct Sail's source patches and world-map integration have been reviewed against the final 1.2 game scripts and runtime-tested on the official 1.2 release. The base game now includes the corrected Aruba world-map coordinates, so the obsolete `worldmap_init.c.patch` is no longer required; Direct Sail retains a defensive saved-game repair for older saves carrying the previous coordinates.
+> Direct Sail's source patches and world-map integration have been reviewed against the final 1.2 game scripts and runtime-tested on the official 1.2 release. 
 >
 > Direct Sail was developed and tested with the **Sea Dogs** DLC installed. The newer **Buccaneers** DLC has **not** been used during development or compatibility testing; see [Buccaneers DLC compatibility](#buccaneers-dlc-compatibility).
 >
@@ -35,7 +35,6 @@ No new game is required.
 * Sail directly between islands without entering the global map.
 * Position and heading are preserved when moving between sea areas.
 * Correctly handles transitions between islands using different map scales.
-* Handles the corrected Aruba data supplied by version 1.2 and retains Direct Sail's additional Curacao transition handling.
 * Adds the player's current position to the paper world maps.
 * Ships gradually repair while travelling, at 1/27 of the normal daily repair rate per in-game hour.
 
@@ -347,7 +346,7 @@ Original material remains copyright of its respective authors and contributors. 
 
 The current GitHub and Steam Workshop builds target **Caribbean Legend: Age of Pirates 1.2**.
 
-Direct Sail's source-patch anchors and relevant world-map and quest integrations have been checked against the official 1.2 game files, and the core system has been runtime-tested on the official 1.2 release. The obsolete `Program/worldmap/worldmap_init.c.patch` file has been removed because the Aruba coordinate correction it previously supplied is now part of the base game; Direct Sail retains a defensive repair for older saved coordinate data.
+Direct Sail's source-patch anchors and relevant world-map and quest integrations have been checked against the official 1.2 game files, and the core system has been runtime-tested on the official 1.2 release. 
 
 The mod was developed and tested with the **Sea Dogs** DLC installed.
 
