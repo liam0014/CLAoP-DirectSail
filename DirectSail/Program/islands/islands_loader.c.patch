@@ -359,6 +359,7 @@ void DirectSail_CleanupGeneratedEncounters()
     string sID;
     string sPath;
     string sReason;
+    string sKind;
 
     makearef(WME, worldMap.encounters);
 
@@ -412,8 +413,15 @@ void DirectSail_CleanupGeneratedEncounters()
 
         if(sReason != "")
         {
+            sKind = "";
+            if(CheckAttribute(rEnc, "dsGeneratedKind"))
+            {
+                sKind = " kind=" + rEnc.dsGeneratedKind;
+            }
+
             trace("DS CLEANUP: delete id=" + sID +
                   " type=" + rEnc.type +
+                  sKind +
                   " reason=" + sReason);
 
             DeleteAttribute(&worldMap, sPath);
@@ -421,15 +429,6 @@ void DirectSail_CleanupGeneratedEncounters()
         }
     }
 
-    if(iRemoved > 0)
-    {
-        makearef(WME, worldMap.encounters);
-
-        trace("DS CLEANUP: removed=" + iRemoved +
-              " consumed=" + iConsumed +
-              " expired=" + iExpired +
-              " poolNow=" + GetAttributesNum(WME));
-    }
 }
 
 
@@ -596,7 +595,6 @@ void DirectSail_UpdatePersistentStorms()
         }
     }
 }
-
 
 int DirectSail_CountPersistentStorms()
 {
@@ -782,14 +780,20 @@ void DirectSail_ProcessNaturalStormGeneration(float fPlayerMapX, float fPlayerMa
     float fIncrement;
     int iRoll;
 
+    // Match vanilla worldmapencountersoff semantics: existing persistent storms
+    // still move and age, but no new storm is generated while scripted world-map
+    // encounters are suppressed.
+    if(CheckAttribute(pchar, "worldmapencountersoff") == 1)
+    {
+        if(sti(pchar.worldmapencountersoff)) return;
+    }
+
     // Match CLAOP's native rule: do not accumulate another storm while a live
     // persistent storm already exists.
     iStorms = DirectSail_CountPersistentStorms();
     if(iStorms > 0)
     {
         pchar.DirectSail.StormAccumulator = 0.0;
-        trace("DS STORM CHECK: existing=" + iStorms +
-              " accumulator reset");
         return;
     }
 
@@ -930,11 +934,6 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
             sSourceID = GetAttributeName(rRawGroup);
         }
     }
-
-    trace("DS REPLENISH: local=" + iLocalCount +
-          " global=" + iGlobalCount +
-          " island=" + worldMap.island +
-          " pos=" + fPlayerMapX + "," + fPlayerMapZ);
 
     // Base CLAOP resets its generation timers while the encounter population
     // is full. Direct Sail applies that ceiling LOCALLY around the player's
@@ -1122,7 +1121,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
         }
         else
         {
-            trace("DS REPLENISH: Merchant generation attempt failed.");
+            trace("DS REPLENISH SKIP: Merchant generator returned no encounter");
         }
 
         ReleaseMapEncounters();
@@ -1375,7 +1374,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
                 }
                 else
                 {
-                    trace("DS REPLENISH: Warring generation attempt failed.");
+                    trace("DS REPLENISH SKIP: Warring generator returned no encounter");
                 }
 
                 ReleaseMapEncounters();
@@ -1516,7 +1515,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
                         }
                         else
                         {
-                            trace("DS REPLENISH: Follow generation attempt failed.");
+                            trace("DS REPLENISH SKIP: Follow generator returned no encounter");
                         }
 
                         ReleaseMapEncounters();
@@ -1659,7 +1658,7 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
                 }
                 else
                 {
-                    trace("DS REPLENISH: Special generation attempt failed.");
+                    trace("DS REPLENISH SKIP: Special generator returned no encounter");
                 }
 
                 ReleaseMapEncounters();
@@ -1667,17 +1666,6 @@ void DirectSail_ReplenishEncounters(float fPlayerMapX, float fPlayerMapZ, int iS
         }
     }
 
-    }
-
-    trace("DS REPLENISH: timers M=" + wdmTimeOfLastMerchant +
-          " W=" + wdmTimeOfLastWarring +
-          " F=" + wdmTimeOfLastFollow +
-          " S=" + wdmTimeOfLastSpecial);
-
-    if(bCreated)
-    {
-        makearef(WME, worldMap.encounters);
-        trace("DS REPLENISH: persistent pool now=" + GetAttributesNum(WME));
     }
 
     // Storms remain a separate sibling system for later integration.

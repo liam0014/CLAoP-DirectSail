@@ -7,12 +7,10 @@
 			if(IsEntity(&worldMap)) return true;
 
 			// Direct Sail emits a one-shot synthetic MapEnter pulse only at a
-			// genuine sea-zone transition. Most vanilla MapEnter conditions use
-			// the event as a strategic-travel / leave-sea sequencing hook and do
-			// not actually require a live world-map entity, so allow those by
-			// default. Keep a small explicit denylist for callbacks whose audited
-			// implementations genuinely require the native world map or are part
-			// of the Peter Blood world-map tutorial itself.
+			// genuine sea-zone transition. Fail closed: only official 1.2
+			// conditions whose callbacks were source-audited as safe may consume
+			// that pulse. Unknown or world-map-dependent conditions stay pending
+			// for the native world map.
 			if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
 			{
 				if(CheckAttribute(pchar, "DirectSail.MapEnterCurrentQuest"))
@@ -27,24 +25,123 @@
 						return false;
 					}
 
-					// Known native-world-map dependencies. These callbacks either test
-					// IsEntity(&worldMap) themselves before doing their real work or
-					// intentionally teach/use the actual Peter Blood world map.
-					if(sTmpString == "time_over_Beliz_attack_Map_01" ||
-					   sTmpString == "time_over_Beliz_attack_Map_02" ||
-					   sTmpString == "PQ8_PanamaTimerOver_01" ||
-					   sTmpString == "PQ8_PanamaTimerOver_02" ||
-					   sTmpString == "SeaPearl_FirstTime_Late_01" ||
-					   sTmpString == "PGGQuest1_Time2Late_01" ||
-					   sTmpString == "BloodLine_GlobalTutor_WorldmapTutorial" ||
-					   sTmpString == "BloodLine_GlobalTutor_OnExitToMapAgain")
+					// Audited official-1.2 fixed quest/event conditions.
+					if(sTmpString == "FreeCaptureForts" ||
+					   sTmpString == "PGGQuest1_Runaway" ||
+					   sTmpString == "ReasonToFast_SetPirateShip" ||
+					   sTmpString == "CapComission_DieHard" ||
+					   sTmpString == "CaptainComission_ExitFromShoreAfterGang" ||
+					   sTmpString == "CaptainComission_MapEnterAfterGang" ||
+					   sTmpString == "CaptainComission_MapEnter" ||
+					   sTmpString == "CaptainComission_MapEnterAfterShoreBattle" ||
+					   sTmpString == "ShipWreck_MapEnter" ||
+					   sTmpString == "LaunchSalaryScreen")
 					{
-						trace("DS MAPENTER DENYLIST: quest=" + sTmpString);
-						return false;
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
 					}
 
-					trace("DS MAPENTER FIRE: quest=" + sTmpString);
-					return true;
+					if(sTmpString == "FL5as26" ||
+					   sTmpString == "FL5s45" ||
+					   sTmpString == "FL7s25" ||
+					   sTmpString == "FL9s59" ||
+					   sTmpString == "Nation_Legend_Map" ||
+					   sTmpString == "Nation_Legend_Map_TEST" ||
+					   sTmpString == "ConvoyMapPassenger" ||
+					   sTmpString == "MorrisWillams_DieHard" ||
+					   sTmpString == "ToMansfield_DieHard" ||
+					   sTmpString == "AttackSantiago_DieHard")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					if(sTmpString == "SpanishAttack_DieHard" ||
+					   sTmpString == "DefenceOrange_DieHard" ||
+					   sTmpString == "ThreeFleutes_DieHard" ||
+					   sTmpString == "DelivLettTortuga_BrigDieHard" ||
+					   sTmpString == "DelivLettTortuga_WarshipDieHard" ||
+					   sTmpString == "SeekBible_DieHard" ||
+					   sTmpString == "SpaAttackCuracao_DieHard" ||
+					   sTmpString == "SpaAttackSentMartin_DieHard" ||
+					   sTmpString == "Inquisition_DieHard" ||
+					   sTmpString == "TakeRockBras_DieHard")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					if(sTmpString == "Sp6TakeMess_OpenTortuga" ||
+					   sTmpString == "Sp7SavePardal_DieHard" ||
+					   sTmpString == "Sp8SaveCumana_DieHard" ||
+					   sTmpString == "Sp9SaveCumana_DieHard" ||
+					   sTmpString == "Sp10Maracaibo_DieHard" ||
+					   sTmpString == "Fr4SoleiRoyal_DieHard" ||
+					   sTmpString == "Fr9GuardPP_DieHard" ||
+					   sTmpString == "Romantic_BrigDieHard" ||
+					   sTmpString == "Ascold_DieHardManowar" ||
+					   sTmpString == "PDM_NEPobeda_nad_Callow")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					if(sTmpString == "BlueBird_DieHard2" ||
+					   sTmpString == "BlueBird_DieHard1" ||
+					   sTmpString == "BlueBirdFleut_over3" ||
+					   sTmpString == "Sharp_mapOver" ||
+					   sTmpString == "SeaPearl_DieHard2" ||
+					   sTmpString == "SeaPearl_SharpRevenge_OnExit" ||
+					   sTmpString == "PiratesLine_q3_over3" ||
+					   sTmpString == "PQ4_SeaPearl_DieHard2" ||
+					   sTmpString == "MC_startAgain" ||
+					   sTmpString == "Slavetrader_DieHard")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					if(sTmpString == "Slavetrader_DieHardHavana" ||
+					   sTmpString == "jailCanMoveDeliver_DieHard" ||
+					   sTmpString == "jailCanMoveDeliver_DieHardC" ||
+					   sTmpString == "mOfficer_fc2" ||
+					   sTmpString == "Headhunter_DieHard" ||
+					   sTmpString == "PDM_Lesopilka_Treasures_Leave" ||
+					   sTmpString == "PDM_Lesopilka_Treasures_BackToVillemstad" ||
+					   sTmpString == "PQ7_setBattleShip" ||
+					   sTmpString == "VillemstadResGatesLock" ||
+					   sTmpString == "CapBloodLine_UsurerQuest_MapEnter")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					if(sTmpString == "Rand_ContrabandAtSeaEnded" ||
+					   sTmpString == "CloseBermudesDungeonDoor" ||
+					   sTmpString == "SeekBible_DeGrafToTavern" ||
+					   sTmpString == "Inquisition_afterFightAndrew" ||
+					   sTmpString == "EPL_PZD_ProvalMissii" ||
+					   sTmpString == "EPL_PrologueEnd" ||
+					   sTmpString == "Andre_Abel_Quest_EnterMap" ||
+					   sTmpString == "LeaveGoldleet" ||
+					   sTmpString == "CheckHavanaGoldFleet")
+					{
+						trace("DS MAPENTER FIRE: quest=" + sTmpString);
+						return true;
+					}
+
+					// Generated citizen/captain quests use a runtime SCQ_* quest name,
+					// so identify the audited case by its stable callback instead.
+					if(CheckAttribute(pchar, "quest." + sTmpString + ".function"))
+					{
+						if(pchar.quest.(sTmpString).function == "SCQ_seekCapIsDeath")
+						{
+							trace("DS MAPENTER FIRE: quest=" + sTmpString + " callback=SCQ_seekCapIsDeath");
+							return true;
+						}
+					}
+
+					trace("DS MAPENTER BLOCK UNAUDITED: quest=" + sTmpString);
 				}
 			}
 
@@ -65,7 +162,7 @@
 
 		// ProcessCondition() normally receives only the condition aref, not the
 		// owning quest name. Expose the current quest during the short Direct
-		// Sail pulse so MapEnter can apply the audited denylist above.
+		// Sail pulse so MapEnter can apply the audited allowlist above.
 		if(CheckAttribute(pchar, "DirectSail.MapEnterPulse"))
 		{
 			pchar.DirectSail.MapEnterCurrentQuest = sQuestName;

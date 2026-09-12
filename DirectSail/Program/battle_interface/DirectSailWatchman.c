@@ -747,7 +747,6 @@ int DirectSail_QuestPromoteQueuedEncounters()
                                                  "." + sRouteAlias;
 
                                     trace("DS RC5.13 ROUTE START FROM_SEA PATH: " + sRoutePath);
-
                                     bRoutePathHasPos = false;
                                     if(CheckAttribute(&worldMap, sRoutePath + ".position.x"))
                                     {
@@ -1147,7 +1146,6 @@ int DirectSail_QuestPromoteQueuedEncounters()
             ReleaseMapEncounters();
             continue;
         }
-
         trace("DS QUEST PROMOTED ENCDATA: chr=" + sChr +
               " id=" + sNewID +
               " group=" + rNew.encdata.GroupName +
@@ -1322,8 +1320,6 @@ void DirectSail_QuestUpdateLifetimeClock()
         }
 
         fElapsedLife = makefloat(iElapsedHours) / fHourPerSec;
-        trace("DS QUEST LIFETIME TICK: elapsedHours=" + iElapsedHours +
-              " elapsedLife=" + fElapsedLife);
     }
 
     iExpired = 0;
@@ -1947,7 +1943,6 @@ int DirectSail_WatchmanContactPicSelected(aref rEnc)
 void DirectSail_WatchmanBuildDirectionIcons()
 {
     DeleteAttribute(&BattleInterface, "UserIcons");
-
     BattleInterface.UserIcons.ui1.enable = true;
     BattleInterface.UserIcons.ui1.selpic = 96;
     BattleInterface.UserIcons.ui1.pic = 112;
@@ -2147,7 +2142,6 @@ int DirectSail_WatchmanBuildContacts()
         iPic = DirectSail_WatchmanContactPicNormal(rEnc);
         iSelPic = DirectSail_WatchmanContactPicSelected(rEnc);
         iTex = DirectSail_WatchmanContactTexture(rEnc);
-
         sNote = DirectSail_WatchmanContactLabel(rEnc) + " - " +
                 DirectSail_WatchmanDirection(fDx, fDz) + " - " +
                 DirectSail_WatchmanRange(fDistSq);
@@ -2393,7 +2387,6 @@ void DirectSail_WatchmanPrepareLoad()
     if(CheckAttribute(pchar, "DirectSail.QuestExpiryDeferred"))
         DeleteAttribute(pchar, "DirectSail.QuestExpiryDeferred");
 
-    trace("DS WATCHMAN LOAD PREPARE");
 }
 
 void DirectSail_WatchmanFinishLoad()
