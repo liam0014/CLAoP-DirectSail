@@ -37,6 +37,7 @@ No new game is required.
 * Correctly handles transitions between islands using different map scales.
 * Adds the player's current position to the paper world maps.
 * Ships gradually repair while travelling, at 1/27 of the normal daily repair rate per in-game hour.
+* The Cartographer perk has been updated so it still adds value to DirectSail; out of combat sailing speed is increased by 1%.
 
 ### Persistent encounters
 
